@@ -4,7 +4,7 @@ services:
 
     volumes:
       - ./frontend:/app
-      - .env:/.env
+
     ports:
       - "5173:5173"
     tty: true
@@ -19,6 +19,8 @@ services:
     
     volumes:
       - ./backend:/var/www/html
+      - .env:/var/www/.env
+      - /var/www/html/vendor
 
     ports:
       - "80:80"
