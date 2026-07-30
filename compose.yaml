@@ -1,0 +1,40 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    volumes:
+      - ./frontend/CFMS:/app
+      - ./frontend/CFMS/node_modules:/app/node_modules
+
+    ports:
+      - "5173:5173"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      
+  db:
+    image: mariadb:latest
+
+    environment:
+      - MARIADB_DATABASE=${MARIADB_DATABASE?Database name is not set}
+      - MARIADB_USER=${MARIADB_USER?User name is not set}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD?Password is not set}
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD?Root password is not set}
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
