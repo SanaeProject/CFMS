@@ -1,0 +1,22 @@
+{
+    "name": "sanae/backend",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Sanae\\Backend\\": "src/"
+        },
+        "files": ["db/bootstrap.php"]
+    },
+    "authors": [
+        {
+            "name": "OtonariShunji",
+            "email": "shunji@otonari.dev"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.6",
+        "illuminate/database": "^12.64",
+        "illuminate/events": "^12.64",
+        "robmorgan/phinx": "^0.16.12"
+    }
+}
