@@ -13,7 +13,7 @@ services:
 
     environment:
       - CHOKIDAR_USEPOLLING=true
-      
+
   backend:
     build:
       context: ./backend
@@ -27,7 +27,7 @@ services:
         condition: service_healthy
       
   db:
-    image: mariadb:latest
+    image: mariadb:lts
 
     environment:
       - MARIADB_DATABASE=${MARIADB_DATABASE?Database name is not set}
