@@ -1,0 +1,46 @@
+services:
+  frontend:
+    image: node:24-slim
+
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    tty: true
+
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      
+  db:
+    image: mariadb:lts
+
+    environment:
+      - MARIADB_DATABASE=${MARIADB_DATABASE?Database name is not set}
+      - MARIADB_USER=${MARIADB_USER?User name is not set}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD?Password is not set}
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD?Root password is not set}
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
