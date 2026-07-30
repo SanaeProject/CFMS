@@ -9,3 +9,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_mysql
 
 WORKDIR /var/www/html
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader
+
+WORKDIR /var/www/html
