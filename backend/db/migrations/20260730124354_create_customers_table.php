@@ -22,6 +22,7 @@ final class CreateCustomersTable extends AbstractMigration
         $table = $this->table('customers');
         $table->addColumn('user_id', 'biginteger', ['null' => false])
             ->addColumn('paid', 'boolean', ['null' => false, 'default' => false])
+            ->addColumn('disabled', 'boolean', ['null' => false, 'default' => false])
             ->addIndex(['user_id'], ['unique' => true])
             ->create();
     }

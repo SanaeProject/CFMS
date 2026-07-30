@@ -20,7 +20,7 @@ final class CreateEmployeesTable extends AbstractMigration
     public function change(): void
     {
         $table = $this->table('employees');
-        $table->addColumn('store_id', 'integer', ['null' => false]) // integerに変更
+        $table->addColumn('store_id', 'integer', ['null' => false, 'signed'=>false]) // integerに変更
             ->addColumn('name', 'string', ['limit' => 255, 'null' => false])
             ->addForeignKey('store_id', 'stores', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
             ->create();

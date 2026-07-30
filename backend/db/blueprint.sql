@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `stores` (
 
 CREATE TABLE IF NOT EXISTS `employees` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `store_id` INT NOT NULL, -- INT に修正
+    `store_id` INT NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `customers` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT NOT NULL,
     `paid` BOOLEAN NOT NULL DEFAULT FALSE,
+    `disabled` BOOLEAN NOT NULL DEFAULT FALSE, -- ゲーム終了時 true
     UNIQUE KEY `uk_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -25,6 +26,6 @@ CREATE TABLE IF NOT EXISTS `histories` (
     `store_id` INT NOT NULL,
     `score` INT NOT NULL,
     `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`customer_user_id`) REFERENCES `customers`(`user_id`) ON DELETE CASCADE,
-    FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE CASCADE
+    FOREIGN KEY (`customer_user_id`) REFERENCES `customers`(`user_id`) ON DELETE NO ACTION
+    FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -20,9 +20,11 @@ final class CreateStoresTable extends AbstractMigration
     public function change(): void
     {
         $table = $this->table('stores');
-        $table->addColumn('parent_id', 'integer', ['null' => true, 'default' => null])
+        $table->addColumn('parent_id', 'integer', ['null' => true, 'default' => null, 'signed'=> false])
             ->addColumn('name', 'string', ['limit' => 255, 'null' => false])
-            ->addForeignKey('parent_id', 'stores', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
             ->create();
+        
+        $table->addForeignKey('parent_id', 'stores', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
+            ->update();
     }
 }

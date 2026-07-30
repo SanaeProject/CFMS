@@ -21,11 +21,11 @@ final class CreateHistoriesTable extends AbstractMigration
     {
         $table = $this->table('histories');
         $table->addColumn('customer_user_id', 'biginteger', ['null' => false])
-            ->addColumn('store_id', 'integer', ['null' => false])
+            ->addColumn('store_id', 'integer', ['null' => false, 'signed'=>false])
             ->addColumn('score', 'integer', ['null' => false])
             ->addColumn('time', 'timestamp', ['null' => false, 'default' => 'CURRENT_TIMESTAMP'])
-            ->addForeignKey('customer_user_id', 'customers', 'user_id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
-            ->addForeignKey('store_id', 'stores', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
+            ->addForeignKey('customer_user_id', 'customers', 'user_id', ['delete' => 'NO_ACTION', 'update' => 'NO_ACTION'])
+            ->addForeignKey('store_id', 'stores', 'id', ['delete' => 'NO_ACTION', 'update' => 'NO_ACTION'])
             ->addIndex(['customer_user_id', 'time'])
             ->addIndex(['store_id', 'time'])
             ->create();
