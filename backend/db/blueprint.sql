@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS `stores` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `parent_id` INT DEFAULT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    FOREIGN KEY (`parent_id`) REFERENCES `stores`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `employees` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `store_id` INT NOT NULL, -- INT に修正
+    `name` VARCHAR(255) NOT NULL,
+    FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `customers` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT NOT NULL,
+    `paid` BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE KEY `uk_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `histories` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `customer_user_id` BIGINT NOT NULL,
+    `store_id` INT NOT NULL,
+    `score` INT NOT NULL,
+    `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`customer_user_id`) REFERENCES `customers`(`user_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
