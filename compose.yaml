@@ -4,6 +4,7 @@ services:
 
     volumes:
       - ./frontend:/app
+      - .env:/.env
     ports:
       - "5173:5173"
     tty: true
@@ -15,6 +16,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    
+    volumes:
+      - ./backend:/var/www/html
 
     ports:
       - "80:80"
@@ -27,10 +31,10 @@ services:
     image: mariadb:lts
 
     environment:
-      - MARIADB_DATABASE=${MARIADB_DATABASE?Database name is not set}
-      - MARIADB_USER=${MARIADB_USER?User name is not set}
-      - MARIADB_PASSWORD=${MARIADB_PASSWORD?Password is not set}
-      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD?Root password is not set}
+      - MARIADB_DATABASE=${DB_NAME?Database name is not set}
+      - MARIADB_USER=${DB_USER?User name is not set}
+      - MARIADB_PASSWORD=${DB_PASSWORD?Password is not set}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD?Root password is not set}
 
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
