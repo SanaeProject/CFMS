@@ -26,6 +26,6 @@ CREATE TABLE IF NOT EXISTS `histories` (
     `store_id` INT NOT NULL,
     `score` INT NOT NULL,
     `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`customer_user_id`) REFERENCES `customers`(`user_id`) ON DELETE NO ACTION
+    FOREIGN KEY (`customer_user_id`) REFERENCES `customers`(`user_id`) ON DELETE NO ACTION,
     FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
