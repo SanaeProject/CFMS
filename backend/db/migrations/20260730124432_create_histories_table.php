@@ -24,6 +24,7 @@ final class CreateHistoriesTable extends AbstractMigration
             ->addColumn('store_id', 'integer', ['null' => false, 'signed'=>false])
             ->addColumn('score', 'integer', ['null' => false])
             ->addColumn('time', 'timestamp', ['null' => false, 'default' => 'CURRENT_TIMESTAMP'])
+            ->addTimestamps()
             ->addForeignKey('customer_user_id', 'customers', 'user_id', ['delete' => 'NO_ACTION', 'update' => 'NO_ACTION'])
             ->addForeignKey('store_id', 'stores', 'id', ['delete' => 'NO_ACTION', 'update' => 'NO_ACTION'])
             ->addIndex(['customer_user_id', 'time'])

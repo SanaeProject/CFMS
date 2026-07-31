@@ -22,6 +22,9 @@ final class CreateEmployeesTable extends AbstractMigration
         $table = $this->table('employees');
         $table->addColumn('store_id', 'integer', ['null' => false, 'signed'=>false]) // integerに変更
             ->addColumn('name', 'string', ['limit' => 255, 'null' => false])
+            ->addColumn('password', 'string', ['limit' => 255, 'null' => false])
+            ->addColumn('role', 'enum', ['values' => ['admin', 'staff'], 'default' => 'staff', 'null' => false])
+            ->addTimestamps()
             ->addForeignKey('store_id', 'stores', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
             ->create();
     }
