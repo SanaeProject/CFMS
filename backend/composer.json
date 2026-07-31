@@ -3,7 +3,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Sanae\\Backend\\": "src/"
+            "Models\\": "db/models/"
         },
         "files": ["db/bootstrap.php"]
     },

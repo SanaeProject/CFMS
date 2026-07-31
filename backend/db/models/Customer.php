@@ -1,6 +1,5 @@
 <?php
-
-namespace App\Models;
+namespace Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,7 +9,6 @@ class Customer extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'user_id',
         'paid',
         'disabled',
     ];
