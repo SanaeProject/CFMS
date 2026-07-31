@@ -13,10 +13,16 @@ class Employee extends Model
     protected $fillable = [
         'store_id',
         'name',
-        'password',
         'role',
     ];
 
+    protected $hidden = [
+        'password',
+    ];
+
+    public function setPassword($password) {
+        $this->password = password_hash($password, PASSWORD_DEFAULT);
+    }
     public static function tryLogin($name, $password) :?Employee {
         $employee = Employee::where('name', $name)->first();
         if ($employee && password_verify($password, $employee->password)) {
