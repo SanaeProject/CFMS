@@ -1,0 +1,39 @@
+データ定義書メモ
+
+
+Users(利用者)
+------------------
+id PK
+name
+is_active
+finished_at(アカウントの終了時刻)
+created_at
+
+
+Staff(管理者とスタッフ)(Staffは複数形無し)
+------------------
+id PK
+name
+password(ハッシュ化する)
+role(列挙型で作成)
+
+
+Stores(店)
+------------------
+id PK
+name
+
+
+Scores
+------------------
+id PK（履歴の主キー）
+user_id FK（ポイントの持ち主）
+staff_id FK
+(そのポイントを記録した担当者のID。ユーザーの不正監視を目的とする)
+score
+store_id FK
+(どの店のポイントかを記録）
+created_at
+(時間を記録することで日ごとの集計が可能になる）
+
+
