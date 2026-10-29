@@ -77,24 +77,24 @@
                                 value="">
 
                             <!-- ユーザーID：文字列として扱う -->
-                            <div class="mb-3">
-                                <label for="userId" class="form-label">
-                                    ユーザーID
+                                                        <div class="mb-3">
+                                <label for="token" class="form-label">
+                                    トークン
                                     <span class="text-danger">*</span>
                                 </label>
 
                                 <input
                                     type="text"
                                     class="form-control"
-                                    id="userId"
-                                    name="userId"
-                                    placeholder="ユーザーIDを入力"
+                                    id="token"
+                                    name="token"
+                                    placeholder="10文字のトークンを入力"
                                     autocomplete="username"
-                                    maxlength="100"
+                                    maxlength="10"
                                     required>
 
                                 <div class="invalid-feedback">
-                                    ユーザーIDを入力してください。
+                                    トークンを入力してください。
                                 </div>
                             </div>
 
