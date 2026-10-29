@@ -21,16 +21,16 @@ final class CreateStaff extends AbstractMigration
     {
         $table = $this->table('staff');
 
-    $table
-        ->addColumn('name', 'string', [
-            'limit' => 255,
-        ])
-        ->addColumn('password', 'string', [
-            'limit' => 255,
-        ])
-        ->addColumn('role', 'enum', [
-            'values' => ['staff', 'admin'],
-        ])
-        ->create();
+        $table
+            ->addColumn('name', 'string', [
+                'limit' => 255,
+            ])
+            ->addColumn('password', 'string', [
+                'limit' => 255,
+            ])
+            ->addColumn('role', 'enum', [
+                'values' => ['admin', 'reception', 'store', 'prize'],
+            ])
+            ->create();
     }
 }

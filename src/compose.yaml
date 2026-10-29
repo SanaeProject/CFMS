@@ -44,6 +44,9 @@ services:
       timeout: 5s
       retries: 3
 
+    ports:
+      - "${DB_PORT}:3306"
+      
     volumes:
       - db_data:/var/lib/mysql
 

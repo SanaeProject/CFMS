@@ -1,11 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
     <!-- 基本設定 -->
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="乙成隼士,松本浩成,永島愛貴,塩川海響,星川誠弥,中島悠翔">
 
@@ -27,9 +27,12 @@
     <meta property="og:image:alt" content="CFMS">
     <meta property="og:description" content="CFMSの管理者・スタッフ専用ログインページ">
 
-    <!-- bootstrap読み込み -->
+    <!-- CSRFトークン用 -->
+    <meta name="csrf-token" content="">
+
+    <!-- Bootstrap -->
     <link rel="stylesheet" href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
-    <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js" defer></script>
 </head>
 
 <body class="bg-light">
@@ -58,22 +61,24 @@
                             スタッフIDとパスワードを入力してください。
                         </p>
 
-                        <!-- 処理結果・エラーメッセージ表示領域 -->
+                        <!-- 処理結果・エラーメッセージ -->
                         <div
                             id="statusArea"
                             class="mb-3"
                             role="status"
-                            aria-live="polite"></div>
+                            aria-live="polite"
+                        ></div>
 
-                        <!-- 通常送信を行わず、JavaScriptで処理する -->
+                        <!-- ログインフォーム -->
                         <form id="loginForm" novalidate>
 
-                            <!-- CSRFトークン：PHP側で自動設定 -->
+                            <!-- CSRFトークン -->
                             <input
                                 type="hidden"
                                 id="csrfToken"
                                 name="csrf_token"
-                                value="">
+                                value=""
+                            >
 
                             <!-- スタッフID -->
                             <div class="mb-3">
@@ -90,7 +95,8 @@
                                     placeholder="スタッフIDを入力"
                                     autocomplete="username"
                                     maxlength="100"
-                                    required>
+                                    required
+                                >
 
                                 <div class="invalid-feedback">
                                     スタッフIDを入力してください。
@@ -111,7 +117,8 @@
                                     name="password"
                                     placeholder="パスワードを入力"
                                     autocomplete="current-password"
-                                    required>
+                                    required
+                                >
 
                                 <div class="invalid-feedback">
                                     パスワードを入力してください。
@@ -123,11 +130,13 @@
                                 <input
                                     type="checkbox"
                                     class="form-check-input"
-                                    id="showPassword">
+                                    id="showPassword"
+                                >
 
                                 <label
                                     class="form-check-label"
-                                    for="showPassword">
+                                    for="showPassword"
+                                >
                                     パスワードを表示する
                                 </label>
                             </div>
@@ -137,7 +146,8 @@
                                 <button
                                     type="submit"
                                     class="btn btn-primary"
-                                    id="loginButton">
+                                    id="loginButton"
+                                >
                                     ログイン
                                 </button>
                             </div>
@@ -149,14 +159,15 @@
                             <button
                                 type="button"
                                 class="btn btn-link text-decoration-none"
-                                id="checkSessionButton">
+                                id="checkSessionButton"
+                            >
                                 ログイン状態を確認
                             </button>
                         </div>
 
                     </div>
 
-                    <!-- フッター -->
+                    <!-- カードフッター -->
                     <div class="card-footer text-center text-secondary py-3">
                         <small>CFMS 管理者・スタッフ専用システム</small>
                     </div>
@@ -164,94 +175,114 @@
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- JavaScript：ログイン画面の動作 -->
+    <!-- CSRFトークンの自動埋め込み -->
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
+
+    <!-- 共通フッター -->
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
+
     <script>
+    (() => {
+        'use strict';
+
         // ==============================
         // DOM要素の取得
         // ==============================
 
-        const loginForm = document.getElementById("loginForm");
-        const staffIdInput = document.getElementById("staffId");
-        const passwordInput = document.getElementById("password");
-        const csrfTokenInput = document.getElementById("csrfToken");
-        const statusArea = document.getElementById("statusArea");
-        const loginButton = document.getElementById("loginButton");
-        const showPasswordCheckbox = document.getElementById("showPassword");
-        const checkSessionButton = document.getElementById("checkSessionButton");
+        const loginForm = document.getElementById('loginForm');
+        const staffIdInput = document.getElementById('staffId');
+        const passwordInput = document.getElementById('password');
+        const csrfTokenInput = document.getElementById('csrfToken');
+
+        const statusArea = document.getElementById('statusArea');
+        const loginButton = document.getElementById('loginButton');
+
+        const showPasswordCheckbox = document.getElementById('showPassword');
+        const checkSessionButton = document.getElementById('checkSessionButton');
 
         // ==============================
         // モック用の定数
         // 実際の認証ではサーバー側で認証する
         // ==============================
 
-        const MOCK_STAFF_ID = "staff001";
-        const MOCK_PASSWORD = "demo1234";
-        const SESSION_KEY = "cfmsMockStaff";
+        const MOCK_STAFF_ID = 'staff001';
+        const MOCK_PASSWORD = 'demo1234';
+        const SESSION_KEY = 'cfmsMockStaff';
+
+        let loggingIn = false;
+        let checkingSession = false;
 
         // ==============================
         // メッセージ表示
-        // textContentを使用して安全に文字列を表示する
         // ==============================
 
-        /**
-         * 処理結果やエラーメッセージを表示する
-         * @param {string} message 表示するメッセージ
-         * @param {string} type Bootstrapのアラート種類
-         */
-        function showMessage(message, type = "danger") {
+        function showMessage(message, type = 'danger') {
             statusArea.replaceChildren();
 
-            const alertElement = document.createElement("div");
+            const alertElement = document.createElement('div');
             alertElement.className = `alert alert-${type} mb-0`;
+            alertElement.setAttribute('role', 'alert');
             alertElement.textContent = message;
 
             statusArea.appendChild(alertElement);
         }
 
-        /**
-         * メッセージを消去する
-         */
         function clearMessage() {
             statusArea.replaceChildren();
         }
 
         // ==============================
+        // CSRFトークン取得
+        // ==============================
+
+        function getCsrfToken() {
+            if (csrfTokenInput && csrfTokenInput.value) {
+                return csrfTokenInput.value;
+            }
+
+            const meta = document.querySelector(
+                'meta[name="csrf-token"]'
+            );
+
+            if (meta && meta.content) {
+                return meta.content;
+            }
+
+            return '';
+        }
+
+        // ==============================
         // モックAPI：ログイン処理
-        // 実際に使用する場合はfetchで認証APIを呼び出す
         // ==============================
 
         /**
          * スタッフのログインを模擬する
-         * @param {Object} payload ログインに必要なデータ
-         * @returns {Promise<Object>} 認証結果
+         * 注意：この関数はデモ専用で、実際の認証には使用しない
          */
         async function mockLoginApi(payload) {
             // 通信時間を模擬する
             await new Promise(resolve => setTimeout(resolve, 300));
 
-            // モックではCSRFトークンの存在だけを確認する
             if (!payload.csrfToken) {
                 return {
                     success: false,
-                    message: "CSRFトークンを取得できません。"
+                    message: 'CSRFトークンを取得できません。'
                 };
             }
 
-            // スタッフIDとパスワードを照合する
+            // デモ用の固定ID・パスワードを照合する
             if (
                 payload.staffId === MOCK_STAFF_ID &&
                 payload.password === MOCK_PASSWORD
             ) {
                 const staff = {
                     staffId: MOCK_STAFF_ID,
-                    displayName: "デモスタッフ",
-                    role: "staff"
+                    displayName: 'デモスタッフ',
+                    role: 'staff'
                 };
 
-                // モック用のログイン情報を保存する
                 sessionStorage.setItem(
                     SESSION_KEY,
                     JSON.stringify(staff)
@@ -259,79 +290,93 @@
 
                 return {
                     success: true,
-                    message: "ログインに成功しました。",
+                    message: 'ログインに成功しました。',
                     staff: staff
                 };
             }
 
-            // 認証失敗
             return {
                 success: false,
-                message: "スタッフIDまたはパスワードが正しくありません。"
+                message: 'スタッフIDまたはパスワードが正しくありません。'
             };
         }
 
         // ==============================
-        // フォーム送信処理
-        // デフォルト送信を防止して非同期で処理する
+        // ログインフォーム送信処理
         // ==============================
 
-        loginForm.addEventListener("submit", async function(event) {
+        loginForm.addEventListener('submit', async function(event) {
             event.preventDefault();
+
+            if (loggingIn) {
+                return;
+            }
+
             clearMessage();
 
-            // 入力値を取得する
             const staffId = staffIdInput.value.trim();
             const password = passwordInput.value;
-            const csrfToken = csrfTokenInput.value;
+            const csrfToken = getCsrfToken();
 
             // 必須入力チェック
-            staffIdInput.classList.toggle("is-invalid", !staffId);
-            passwordInput.classList.toggle("is-invalid", !password);
+            staffIdInput.classList.toggle('is-invalid', !staffId);
+            passwordInput.classList.toggle('is-invalid', !password);
 
             if (!staffId || !password) {
                 showMessage(
-                    "スタッフIDとパスワードを入力してください。"
+                    'スタッフIDとパスワードを入力してください。',
+                    'warning'
                 );
                 return;
             }
 
-            // 連続送信を防止する
+            // CSRFトークン確認
+            if (!csrfToken) {
+                showMessage(
+                    'CSRFトークンを取得できません。ページを再読み込みしてください。',
+                    'danger'
+                );
+                return;
+            }
+
+            loggingIn = true;
             loginButton.disabled = true;
-            loginButton.textContent = "認証中...";
+            loginButton.textContent = '認証中...';
 
             try {
-                // ログインAPIのモックを呼び出す
                 const result = await mockLoginApi({
                     staffId: staffId,
                     password: password,
                     csrfToken: csrfToken
                 });
 
-                if (result.success) {
+                if (result.success === true) {
                     showMessage(
-                        "ログインに成功しました。担当店舗の選択へ進みます。",
-                        "success"
+                        'ログインに成功しました。担当店舗の選択へ進みます。',
+                        'success'
                     );
 
                     // 店舗選択画面を実装したら遷移先を設定する
-                    // window.location.href = "/staff/stores";
+                    // window.location.href = '/staff/stores';
                 } else {
-                    showMessage(result.message);
+                    showMessage(
+                        result.message || 'ログインに失敗しました。',
+                        'danger'
+                    );
                 }
 
             } catch (error) {
-                // 予期しないエラーを処理する
-                console.error("Login error:", error);
+                console.error('Login error:', error);
 
                 showMessage(
-                    "処理に失敗しました。もう一度お試しください。"
+                    '処理に失敗しました。もう一度お試しください。',
+                    'danger'
                 );
 
             } finally {
-                // 成功・失敗にかかわらずボタンを元に戻す
+                loggingIn = false;
                 loginButton.disabled = false;
-                loginButton.textContent = "ログイン";
+                loginButton.textContent = 'ログイン';
             }
         });
 
@@ -339,8 +384,8 @@
         // パスワード表示切り替え
         // ==============================
 
-        showPasswordCheckbox.addEventListener("change", function() {
-            passwordInput.type = this.checked ? "text" : "password";
+        showPasswordCheckbox.addEventListener('change', function() {
+            passwordInput.type = this.checked ? 'text' : 'password';
         });
 
         // ==============================
@@ -354,6 +399,7 @@
         async function mockIsLoggedInApi() {
             const storedStaff = sessionStorage.getItem(SESSION_KEY);
 
+            // 保存データがない場合
             if (!storedStaff) {
                 return {
                     success: true,
@@ -363,13 +409,34 @@
             }
 
             try {
+                const staff = JSON.parse(storedStaff);
+
+                // null、配列、必要項目のないデータは無効とする
+                if (
+                    staff === null ||
+                    typeof staff !== 'object' ||
+                    Array.isArray(staff) ||
+                    typeof staff.staffId !== 'string' ||
+                    typeof staff.displayName !== 'string' ||
+                    typeof staff.role !== 'string'
+                ) {
+                    sessionStorage.removeItem(SESSION_KEY);
+
+                    return {
+                        success: true,
+                        isLoggedIn: false,
+                        staff: null
+                    };
+                }
+
                 return {
                     success: true,
                     isLoggedIn: true,
-                    staff: JSON.parse(storedStaff)
+                    staff: staff
                 };
+
             } catch (error) {
-                // 保存データが壊れている場合は削除する
+                // JSONの形式が壊れている場合は削除する
                 sessionStorage.removeItem(SESSION_KEY);
 
                 return {
@@ -384,30 +451,41 @@
         // ログイン状態確認ボタン
         // ==============================
 
-        checkSessionButton.addEventListener("click", async function() {
+        checkSessionButton.addEventListener('click', async function() {
+            if (checkingSession) {
+                return;
+            }
+
+            checkingSession = true;
+            checkSessionButton.disabled = true;
             clearMessage();
 
             try {
                 const result = await mockIsLoggedInApi();
 
-                if (result.isLoggedIn) {
+                if (result.isLoggedIn && result.staff) {
                     showMessage(
-                        "ログイン中です：" + result.staff.displayName,
-                        "success"
+                        'ログイン中です：' + result.staff.displayName,
+                        'success'
                     );
                 } else {
                     showMessage(
-                        "現在ログインしていません。",
-                        "info"
+                        '現在ログインしていません。',
+                        'info'
                     );
                 }
 
             } catch (error) {
-                console.error("Session check error:", error);
+                console.error('Session check error:', error);
 
                 showMessage(
-                    "ログイン状態の確認に失敗しました。"
+                    'ログイン状態の確認に失敗しました。',
+                    'danger'
                 );
+
+            } finally {
+                checkingSession = false;
+                checkSessionButton.disabled = false;
             }
         });
 
@@ -415,24 +493,20 @@
         // 入力時に必須エラーを解除する
         // ==============================
 
-        staffIdInput.addEventListener("input", function() {
+        staffIdInput.addEventListener('input', function() {
             if (this.value.trim()) {
-                this.classList.remove("is-invalid");
+                this.classList.remove('is-invalid');
             }
         });
 
-        passwordInput.addEventListener("input", function() {
+        passwordInput.addEventListener('input', function() {
             if (this.value) {
-                this.classList.remove("is-invalid");
+                this.classList.remove('is-invalid');
             }
         });
+
+    })();
     </script>
 
-    <!-- フッターの読み込み -->
-    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
-
-    <!-- CSRFトークンの自動埋め込み -->
-    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
 </body>
-
 </html>

@@ -27,9 +27,20 @@
 //SECTION: 共通 - 入力の取得
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: " . getenv("APP_URL"));
-header("Access-Control-Allow-Methods: GET, POST");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST, OPTIONS');
+    echo json_encode(["success" => false, "message" => "POSTメソッドを使用してください。", "data" => []], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 

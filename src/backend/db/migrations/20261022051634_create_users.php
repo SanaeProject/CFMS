@@ -20,11 +20,8 @@ final class CreateUsers extends AbstractMigration
     public function change(): void
     {
         $table = $this->table('users');
-        
+
         $table
-            ->addColumn('name', 'string', [
-                'limit' => 255,
-            ])
             ->addColumn('token', 'string', [
                 'limit' => 255,
             ])

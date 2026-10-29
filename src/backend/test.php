@@ -1,0 +1,224 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
+$csrfToken = new Lib\CSRFToken();
+?>
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple API Tester</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .param-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .param-row input {
+            flex: 1;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        .btn-add {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-send {
+            background-color: #007bff;
+            color: white;
+            width: 100%;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .response-area {
+            margin-top: 30px;
+        }
+
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            min-height: 50px;
+        }
+
+        .status {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>POST Request Tester</h2>
+
+        <div class="input-group">
+            <label for="url">送信先URL:</label>
+            <input type="text" id="url" placeholder="https://api.example.com/data" value="http://localhost:8443/">
+        </div>
+
+        <div class="input-group">
+            <label>パラメータ (Body):</label>
+            <div id="params-container">
+                <div class="param-row">
+                    <input type="text" placeholder="Key" class="param-key" value="csrf_token">
+                    <input type="text" placeholder="Value" class="param-value" value="<?php echo $csrfToken->generateToken(); ?>">
+                    <button class="btn-remove" onclick="this.parentElement.remove()">削除</button>
+                </div>
+                <div class="param-row">
+                    <input type="text" placeholder="Key" class="param-key">
+                    <input type="text" placeholder="Value" class="param-value">
+                    <button class="btn-remove" onclick="this.parentElement.remove()">削除</button>
+                </div>
+            </div>
+            <button class="btn-add" onclick="addParamField()">+ パラメータを追加</button>
+        </div>
+
+        <button class="btn-send" onclick="sendRequest()">リクエスト送信</button>
+
+        <div class="response-area">
+            <h3>Response:</h3>
+            <div id="status-code" class="status"></div>
+            <pre id="response-output">ここにレスポンスが表示されます...</pre>
+        </div>
+    </div>
+
+    <script>
+        // パラメータ入力欄を動的に追加
+        function addParamField() {
+            const container = document.getElementById('params-container');
+            const div = document.createElement('div');
+            div.className = 'param-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Key" class="param-key">
+                <input type="text" placeholder="Value" class="param-value">
+                <button class="btn-remove" onclick="this.parentElement.remove()">削除</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // 非同期リクエストの送信
+        async function sendRequest() {
+            const url = document.getElementById('url').value;
+            const responseOutput = document.getElementById('response-output');
+            const statusDisplay = document.getElementById('status-code');
+
+            if (!url) {
+                alert("URLを入力してください");
+                return;
+            }
+
+            // パラメータの収集
+            const keys = document.querySelectorAll('.param-key');
+            const values = document.querySelectorAll('.param-value');
+
+            const objectData = {};
+            keys.forEach((keyInput, index) => {
+                const key = keyInput.value.trim();
+                const value = values[index].value.trim();
+                if (key) {
+                    objectData[key] = value;
+                }
+            });
+
+            console.log("送信データ:", objectData);
+
+            responseOutput.textContent = "送信中...";
+            statusDisplay.textContent = "";
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(
+                        objectData
+                    )
+                });
+                if (response.status !== 200) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+                const result = await response.json().catch(() => {
+                    throw new Error("JSONの解析に失敗しました。間違ったページが返されている可能性があります。");
+                });
+
+                statusDisplay.textContent = `Status: ${response.status} ${response.statusText}`;
+                statusDisplay.style.color = response.ok ? "#28a745" : "#dc3545";
+                responseOutput.textContent = JSON.stringify(result, null, 2);
+
+            } catch (error) {
+                statusDisplay.textContent = "Error";
+                statusDisplay.style.color = "#dc3545";
+                responseOutput.textContent = "エラーが発生しました:\n" + error.message;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
