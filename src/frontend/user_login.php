@@ -27,6 +27,9 @@
     <link rel="stylesheet" href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
     <!-- !SECTION -->
+    <form id="loginForm" novalidate>
+    <input type="hidden" name="csrf_token" value="">
+    
 </head>
 
 <body class="bg-light">
@@ -281,8 +284,7 @@
                 try {
 
                     const response = await fetch(
-                        "<?= getenv('API_URL') ?>/user/login.php",
-                        {
+                        "<?= getenv('API_URL') ?>/user/userloginpage.php",                        {
                             method: "POST",
                             credentials: "include",
                             headers: {
