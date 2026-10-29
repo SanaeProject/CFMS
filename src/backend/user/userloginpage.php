@@ -196,12 +196,12 @@ try {
     //ANCHOR - ユーザーセッション作成
 
     $session = new Lib\Session();
+    $session->regenerateId(true);
 
     $session->set(
         'user_token',
         $user['token']
     );
-
     //ANCHOR - ログイン成功レスポンス
 
     echo json_encode([

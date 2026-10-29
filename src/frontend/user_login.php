@@ -276,7 +276,13 @@
                 }
 
                 loginButton.disabled = true;
-                loginButton.                     {
+                loginButton.textContent = "認証中...";
+
+                try {
+
+                    const response = await fetch(
+                        "<?= getenv('API_URL') ?>/user/login.php",
+                        {
                             method: "POST",
                             credentials: "include",
                             headers: {
@@ -289,7 +295,6 @@
                             })
                         }
                     );
-
                     const result =
                         await response.json();
 
