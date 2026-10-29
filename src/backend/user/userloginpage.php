@@ -50,6 +50,7 @@ $rawData = file_get_contents('php://input');
 $data = json_decode($rawData, true);
 
 if ($data === null) {
+    http_response_code(400);
     echo json_encode([
         "success" => false,
         "message" => "JSONのデコードに失敗しました。",
@@ -58,7 +59,6 @@ if ($data === null) {
 
     exit;
 }
-
 //!SECTION
 
 //SECTION: 入力のバリデーション

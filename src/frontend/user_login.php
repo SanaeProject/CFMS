@@ -27,9 +27,8 @@
     <link rel="stylesheet" href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
     <!-- !SECTION -->
-    <form id="loginForm" novalidate>
+         <form id="loginForm" novalidate>
     <input type="hidden" name="csrf_token" value="">
-    
 </head>
 
 <body class="bg-light">
@@ -241,7 +240,7 @@
 
                 const csrfToken =
                     document.querySelector(
-                        'input[name="csrf_token"]'
+                        '.csrf_token'
                     )?.value;
 
                 tokenInput.classList.remove(
