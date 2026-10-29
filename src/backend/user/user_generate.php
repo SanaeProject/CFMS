@@ -80,8 +80,8 @@ try {
         } while ($check->fetch(PDO::FETCH_ASSOC) !== false);
 
         $db->exec(
-            "INSERT INTO users (name, token, is_active, finished_at, created_at) VALUES (:name, :token, 0, NULL, CURRENT_TIMESTAMP)",
-            [':name' => $token, ':token' => $token]
+            "INSERT INTO users (token, is_active, finished_at, created_at) VALUES (:token, 0, NULL, CURRENT_TIMESTAMP)",
+            [':token' => $token]
         );
 
         $stmt = $db->exec(
