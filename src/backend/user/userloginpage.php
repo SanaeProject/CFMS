@@ -7,7 +7,7 @@
  * {
  *     "token": "ABCDEFGHIJ",
  *     "passcode": "123456",
- *     "csrf_token": "xxxxx"
+ *     "csrf_token": "xxxxxxxx"
  * }
  *
  * 出力:
@@ -19,6 +19,7 @@
  */
 
 //SECTION: 共通 - 入力の取得
+
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: " . getenv("APP_URL"));
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -32,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-
     header('Allow: POST, OPTIONS');
 
     echo json_encode([
@@ -58,9 +58,11 @@ if ($data === null) {
 
     exit;
 }
+
 //!SECTION
 
 //SECTION: 入力のバリデーション
+
 $token = trim($data['token'] ?? '');
 $passcode = $data['passcode'] ?? '';
 $csrfToken = $data['csrf_token'] ?? null;
@@ -68,9 +70,9 @@ $csrfToken = $data['csrf_token'] ?? null;
 $sessionCsrfToken = new Lib\CSRFToken();
 
 if (
-    $token === '' ||
-    $passcode === '' ||
-    $csrfToken === null
+    empty($token) ||
+    empty($passcode) ||
+    empty($csrfToken)
 ) {
     echo json_encode([
         "success" => false,
@@ -100,14 +102,17 @@ if (!$sessionCsrfToken->validateToken($csrfToken)) {
 
     exit;
 }
+
 //!SECTION
 
 //SECTION: 処理の実行
+
 try {
 
     $db = Lib\DB::connect();
 
-    //ANCHOR - ユーザー取得
+    //ANCHOR - ユーザー情報取得
+
     $stmt = $db->exec(
         "
         SELECT
@@ -129,6 +134,7 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     //ANCHOR - ユーザー存在確認
+
     if (!$user) {
         echo json_encode([
             "success" => false,
@@ -139,11 +145,12 @@ try {
         exit;
     }
 
-    //ANCHOR - 利用可能状態確認
+    //ANCHOR - アクティブ状態確認
+
     if (!(bool)$user['is_active']) {
         echo json_encode([
             "success" => false,
-            "message" => "このアカウントは利用できません。",
+            "message" => "このアカウントは現在利用できません。",
             "data" => []
         ]);
 
@@ -151,6 +158,7 @@ try {
     }
 
     //ANCHOR - パスコード発行確認
+
     if ($user['passcode'] === null) {
         echo json_encode([
             "success" => false,
@@ -162,6 +170,7 @@ try {
     }
 
     //ANCHOR - 終了済み確認
+
     if ($user['finished_at'] !== null) {
         echo json_encode([
             "success" => false,
@@ -173,6 +182,7 @@ try {
     }
 
     //ANCHOR - パスコード認証
+
     if (!password_verify($passcode, $user['passcode'])) {
         echo json_encode([
             "success" => false,
@@ -183,16 +193,23 @@ try {
         exit;
     }
 
-    //ANCHOR - ログインセッション作成
+    //ANCHOR - ユーザーセッション作成
+
     $session = new Lib\Session();
 
-    $session->set('user_token', $user['token']);
+    $session->set(
+        'user_token',
+        $user['token']
+    );
+
+    //ANCHOR - ログイン成功レスポンス
 
     echo json_encode([
         "success" => true,
         "message" => "ログインに成功しました。",
         "data" => []
     ]);
+
 } catch (\Exception $e) {
 
     error_log($e->getMessage());
@@ -205,4 +222,5 @@ try {
         "data" => []
     ]);
 }
+
 //!SECTION
