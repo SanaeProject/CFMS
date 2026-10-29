@@ -153,18 +153,7 @@
         const csrfTokenInput = document.getElementById("csrfToken");
         const statusArea = document.getElementById("statusArea");
         const loginButton = document.getElementById("loginButton");
-
-        // =====================================
-        // モック用の定数
-        // 実際の認証情報はサーバー側で管理する
-        // =====================================
-
-        const MOCK_USER = {
-            userId: "user001",
-            passcode: "demo1234",
-            passcodeIssued: true,
-            accountEnded: false
-        };
+        
 
         // =====================================
         // メッセージ表示関数
