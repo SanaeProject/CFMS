@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -23,793 +23,1179 @@
 
     <!-- Bootstrap -->
     <link rel="stylesheet"
-          href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
+        href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
 
     <!-- QRコード読み取りライブラリ -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <input type="hidden" class="csrf_token" value="">
 </head>
 
 <body class="bg-light">
 
-<main class="container py-4" style="max-width: 650px;">
+    <main class="container py-4" style="max-width: 650px;">
 
-    <div class="card shadow-sm">
+        <div class="card shadow-sm">
 
-        <!-- ヘッダー -->
-        <div class="card-header bg-primary text-white p-3">
-            <h1 class="h4 mb-1">得点登録</h1>
-            <p class="mb-0 small">スタッフ用｜ゲームポイント管理</p>
-        </div>
+            <!-- ヘッダー -->
+            <div class="card-header bg-primary text-white p-3">
+                <h1 class="h4 mb-1">得点登録</h1>
+                <p class="mb-0 small">スタッフ用｜ゲームポイント管理</p>
+            </div>
 
-        <div class="card-body">
+            <div class="card-body">
 
-            <!-- メッセージ -->
-            <div id="messageArea"
-                 class="alert d-none"
-                 role="alert"
-                 aria-live="polite"></div>
+                <!-- メッセージ -->
+                <div id="messageArea"
+                    class="alert d-none"
+                    role="alert"
+                    aria-live="polite"></div>
 
-            <!-- 店舗選択 -->
-            <section class="mb-4">
-                <label for="storeId" class="form-label fw-bold">
-                    担当店舗 *
-                </label>
+                <!-- 店舗選択 -->
+                <section class="mb-4">
+                    <label for="storeId" class="form-label fw-bold">
+                        担当店舗 *
+                    </label>
 
-                <select id="storeId" class="form-select" required>
-                    <option value="">店舗を選択してください</option>
-                </select>
+                    <select id="storeId" class="form-select" required>
+                        <option value="">店舗を選択してください</option>
+                    </select>
 
-                <div class="form-text">
-                    担当する店舗を選択してください。
-                </div>
-            </section>
-
-            <hr>
-
-            <!-- QRコード読み取り -->
-            <section class="mb-4">
-                <h2 class="h5 mb-3">1. QRコード読み取り</h2>
-
-                <div class="border rounded p-3 bg-white">
-
-                    <div id="qrReader" class="mb-3 d-none"></div>
-
-                    <div id="cameraStatus"
-                         class="alert alert-secondary py-2"
-                         role="status"
-                         aria-live="polite">
-                        カメラを起動してQRコードを読み取ってください。
+                    <div class="form-text">
+                        担当する店舗を選択してください。
                     </div>
+                </section>
 
-                    <div class="d-grid gap-2 mb-3">
-                        <button type="button"
+                <hr>
+
+                <!-- QRコード読み取り -->
+                <section class="mb-4">
+                    <h2 class="h5 mb-3">1. QRコード読み取り</h2>
+
+                    <div class="border rounded p-3 bg-white">
+
+                        <div id="qrReader" class="mb-3 d-none"></div>
+
+                        <div id="cameraStatus"
+                            class="alert alert-secondary py-2"
+                            role="status"
+                            aria-live="polite">
+                            カメラを起動してQRコードを読み取ってください。
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="button"
                                 id="startCameraButton"
                                 class="btn btn-primary">
-                            カメラを起動する
-                        </button>
+                                カメラを起動する
+                            </button>
 
-                        <button type="button"
+                            <button type="button"
                                 id="stopCameraButton"
                                 class="btn btn-outline-secondary d-none">
-                            カメラを停止する
-                        </button>
-                    </div>
-
-                    <div class="text-center text-secondary small mb-3">
-                        または token を手入力
-                    </div>
-
-                    <!-- ユーザー情報取得フォーム -->
-                    <form id="getUserForm">
-                        <div class="mb-3">
-                            <label for="token" class="form-label">
-                                QRコードのtoken *
-                            </label>
-
-                            <input type="text"
-                                   id="token"
-                                   name="token"
-                                   class="form-control"
-                                   placeholder="tokenを入力してください"
-                                   autocomplete="off"
-                                   required>
+                                カメラを停止する
+                            </button>
                         </div>
 
-                        <button type="submit"
+                        <div class="text-center text-secondary small mb-3">
+                            または token を手入力
+                        </div>
+
+                        <!-- ユーザー情報取得フォーム -->
+                        <form id="getUserForm">
+                            <div class="mb-3">
+                                <label for="token" class="form-label">
+                                    QRコードのtoken *
+                                </label>
+
+                                <input type="text"
+                                    id="token"
+                                    name="token"
+                                    class="form-control"
+                                    placeholder="tokenを入力してください"
+                                    autocomplete="off"
+                                    required>
+                            </div>
+
+                            <button type="submit"
                                 id="getUserButton"
                                 class="btn btn-primary w-100">
-                            ユーザー情報を取得
-                        </button>
-                    </form>
+                                ユーザー情報を取得
+                            </button>
+                        </form>
 
-                </div>
-            </section>
-
-            <!-- ユーザー情報 -->
-            <section id="userSection" class="mb-4 d-none">
-
-                <h2 class="h5 mb-3">2. ユーザー情報</h2>
-
-                <div class="card bg-light">
-                    <div class="card-body">
-                        <dl class="row mb-0">
-
-                            <dt class="col-6">ユーザーID</dt>
-                            <dd class="col-6" id="userId">-</dd>
-
-                            <dt class="col-6">アカウント状態</dt>
-                            <dd class="col-6" id="accountStatus">-</dd>
-
-                            <dt class="col-6">獲得ポイント合計</dt>
-                            <dd class="col-6">
-                                <strong id="totalScore">0</strong> pt
-                            </dd>
-
-                            <dt class="col-6">店舗利用回数</dt>
-                            <dd class="col-6">
-                                <span id="usageCount">0</span>
-                                /
-                                <span id="usageLimit">3</span> 回
-                            </dd>
-
-                        </dl>
                     </div>
-                </div>
+                </section>
 
-                <!-- 得点履歴 -->
-                <div class="mt-3">
-                    <h3 class="h6">得点履歴</h3>
+                <!-- ユーザー情報 -->
+                <section id="userSection" class="mb-4 d-none">
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>登録日時</th>
-                                    <th>店舗</th>
-                                    <th class="text-end">ポイント</th>
-                                </tr>
-                            </thead>
+                    <h2 class="h5 mb-3">2. ユーザー情報</h2>
 
-                            <tbody id="scoreHistory">
-                                <tr>
-                                    <td colspan="3"
-                                        class="text-center text-secondary">
-                                        履歴はありません
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <dl class="row mb-0">
 
-            </section>
+                                <dt class="col-6">トークン</dt>
+                                <dd class="col-6" id="userId">-</dd>
 
-            <!-- 得点登録 -->
-            <section id="scoreSection" class="d-none">
+                                <dt class="col-6">アカウント状態</dt>
+                                <dd class="col-6" id="accountStatus">-</dd>
 
-                <h2 class="h5 mb-3">3. 1プレー分の得点登録</h2>
+                                <dt class="col-6">獲得ポイント合計</dt>
+                                <dd class="col-6">
+                                    <strong id="totalScore">0</strong> pt
+                                </dd>
 
-                <div class="border rounded p-3 bg-white">
-                    <form id="scoreForm">
+                                <dt class="col-6">店舗利用回数</dt>
+                                <dd class="col-6">
+                                    <span id="usageCount">0</span>
+                                    /
+                                    <span id="usageLimit">3</span> 回
+                                </dd>
 
-                        <div class="mb-3">
-                            <label for="score" class="form-label">
-                                獲得ポイント *
-                            </label>
-
-                            <input type="number"
-                                   id="score"
-                                   name="score"
-                                   class="form-control"
-                                   min="0"
-                                   step="1"
-                                   placeholder="ポイントを入力してください"
-                                   required>
-
-                            <div class="form-text">
-                                1プレーにつき1回登録します。
-                                ポイント数自体に上限はありません。
-                            </div>
+                            </dl>
                         </div>
+                    </div>
 
-                        <button type="submit"
+                    <!-- 得点履歴 -->
+                    <div class="mt-3">
+                        <h3 class="h6">得点履歴</h3>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>登録日時</th>
+                                        <th>店舗</th>
+                                        <th class="text-end">ポイント</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scoreHistory">
+                                    <tr>
+                                        <td colspan="4"
+                                            class="text-center text-secondary">
+                                            履歴はありません
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- 得点登録 -->
+                <section id="scoreSection" class="d-none">
+
+                    <h2 class="h5 mb-3">3. 1プレー分の得点登録</h2>
+
+                    <div class="border rounded p-3 bg-white">
+                        <form id="scoreForm">
+
+                            <div class="mb-3">
+                                <label for="score" class="form-label">
+                                    獲得ポイント *
+                                </label>
+
+                                <input type="number"
+                                    id="score"
+                                    name="score"
+                                    class="form-control"
+                                    min="0"
+                                    step="1"
+                                    placeholder="ポイントを入力してください"
+                                    required>
+
+                                <div class="form-text">
+                                    1プレーにつき1回登録します。
+                                    ポイント数自体に上限はありません。
+                                </div>
+                            </div>
+
+                            <button type="submit"
                                 id="registerButton"
                                 class="btn btn-success w-100"
                                 disabled>
-                            得点を登録
-                        </button>
-                    </form>
-                </div>
-            </section>
+                                得点を登録
+                            </button>
+                        </form>
+                    </div>
+                </section>
 
+            </div>
         </div>
+    </main>
 
-        <div class="card-footer text-secondary small">
-            得点登録ページ（モック）
-        </div>
+    <!-- CSRF取得 -->
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
 
-    </div>
-</main>
+    <!-- 共通フッター -->
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
 
-<!-- 共通フッター -->
-<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
+    <script>
+        (() => {
+            'use strict';
 
-<script>
-(() => {
-    'use strict';
+            const API_BASE_URL =
+                '<?= getenv('API_URL') ?>';
 
-    // ========================================
-    // 1. モックデータ
-    // ========================================
+            const STAFF_STORES_API =
+                `${API_BASE_URL}/staff/stores.php`;
 
-    const stores = [
-        { id: '1', name: '1組店舗' },
-        { id: '2', name: '2組店舗' },
-        { id: '3', name: '3組店舗' }
-    ];
+            const SCORE_GET_API =
+                `${API_BASE_URL}/score/get.php`;
 
-    // ユーザー情報のサンプル
-    const mockUsers = {
-        'demo-token-001': {
-            userId: 'USER-001',
-            isActive: true,
-            isEnded: false,
-            totalScore: 120,
-            storeUsageCount: 1,
-            storeUsageLimit: 3,
-            scores: [
-                {
-                    createdAt: '2026-10-20 10:00',
-                    storeId: '1',
-                    score: 50
-                },
-                {
-                    createdAt: '2026-10-21 13:30',
-                    storeId: '2',
-                    score: 70
-                }
-            ]
-        },
+            const SCORE_ADD_API =
+                `${API_BASE_URL}/score/add.php`;
 
-        'demo-token-002': {
-            userId: 'USER-002',
-            isActive: true,
-            isEnded: false,
-            totalScore: 80,
-            storeUsageCount: 0,
-            storeUsageLimit: 3,
-            scores: []
-        }
-    };
+            const SCORE_DELETE_API =
+                `${API_BASE_URL}/score/delete.php`;
 
-    // 現在のユーザー情報
-    let currentUser = null;
-    let currentToken = '';
-    let currentStoreId = '';
+            let stores = [];
 
-    let html5QrCode = null;
-    let cameraRunning = false;
-    let processingQr = false;
-    let loadingUser = false;
-    let registeringScore = false;
+            let currentUser = null;
+            let currentToken = '';
 
-    // ========================================
-    // 2. DOM要素
-    // ========================================
+            let html5QrCode = null;
+            let cameraRunning = false;
+            let processingQr = false;
+            let loadingUser = false;
+            let registeringScore = false;
 
-    const getUserForm = document.getElementById('getUserForm');
-    const scoreForm = document.getElementById('scoreForm');
-
-    const storeSelect = document.getElementById('storeId');
-    const tokenInput = document.getElementById('token');
-    const scoreInput = document.getElementById('score');
-
-    const messageArea = document.getElementById('messageArea');
-    const userSection = document.getElementById('userSection');
-    const scoreSection = document.getElementById('scoreSection');
-
-    const qrReaderElement = document.getElementById('qrReader');
-    const cameraStatus = document.getElementById('cameraStatus');
-
-    const startCameraButton =
-        document.getElementById('startCameraButton');
-
-    const stopCameraButton =
-        document.getElementById('stopCameraButton');
-
-    const getUserButton =
-        document.getElementById('getUserButton');
-
-    const registerButton =
-        document.getElementById('registerButton');
-
-    const scoreHistory = document.getElementById('scoreHistory');
-
-    // ========================================
-    // 3. メッセージ表示
-    // ========================================
-
-    function showMessage(message, type = 'info') {
-        messageArea.textContent = message;
-        messageArea.className = `alert alert-${type}`;
-    }
-
-    function hideMessage() {
-        messageArea.textContent = '';
-        messageArea.className = 'alert d-none';
-    }
-
-    function setCameraStatus(message, type = 'secondary') {
-        cameraStatus.textContent = message;
-        cameraStatus.className = `alert alert-${type} py-2`;
-    }
-
-    // ========================================
-    // 4. 店舗一覧表示
-    // APIは使わずサンプルデータを使用
-    // ========================================
-
-    function loadStores() {
-        storeSelect.replaceChildren();
-
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = '店舗を選択してください';
-        storeSelect.appendChild(defaultOption);
-
-        stores.forEach(store => {
-            const option = document.createElement('option');
-            option.value = store.id;
-            option.textContent = store.name;
-            storeSelect.appendChild(option);
-        });
-    }
-
-    function getStoreName(storeId) {
-        const store = stores.find(item => item.id === String(storeId));
-        return store ? store.name : '不明な店舗';
-    }
-
-    // ========================================
-    // 5. ユーザー情報をリセット
-    // ========================================
-
-    function hideUser() {
-        currentUser = null;
-        currentToken = '';
-        currentStoreId = '';
-
-        userSection.classList.add('d-none');
-        scoreSection.classList.add('d-none');
-
-        scoreHistory.replaceChildren();
-        registerButton.disabled = true;
-    }
-
-    // ========================================
-    // 6. 得点履歴表示
-    // ========================================
-
-    function displayHistory(scores) {
-        scoreHistory.replaceChildren();
-
-        if (!Array.isArray(scores) || scores.length === 0) {
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-
-            td.colSpan = 3;
-            td.className = 'text-center text-secondary';
-            td.textContent = '履歴はありません';
-
-            tr.appendChild(td);
-            scoreHistory.appendChild(tr);
-            return;
-        }
-
-        // 新しい履歴を先に表示
-        [...scores].reverse().forEach(item => {
-            const tr = document.createElement('tr');
-
-            const dateCell = document.createElement('td');
-            dateCell.textContent = item.createdAt || '-';
-
-            const storeCell = document.createElement('td');
-            storeCell.textContent = getStoreName(item.storeId);
-
-            const scoreCell = document.createElement('td');
-            scoreCell.className = 'text-end';
-            scoreCell.textContent =
-                Number(item.score).toLocaleString('ja-JP');
-
-            tr.append(dateCell, storeCell, scoreCell);
-            scoreHistory.appendChild(tr);
-        });
-    }
-
-    // ========================================
-    // 7. ユーザー情報表示
-    // ========================================
-
-    function displayUser(user) {
-        currentUser = user;
-
-        document.getElementById('userId').textContent = user.userId;
-
-        const statusElement =
-            document.getElementById('accountStatus');
-
-        if (user.isEnded) {
-            statusElement.textContent = '終了済み';
-            statusElement.className = 'col-6 text-danger fw-bold';
-        } else if (user.isActive) {
-            statusElement.textContent = '有効';
-            statusElement.className = 'col-6 text-success fw-bold';
-        } else {
-            statusElement.textContent = '未アクティベート';
-            statusElement.className = 'col-6 text-danger fw-bold';
-        }
-
-        document.getElementById('totalScore').textContent =
-            Number(user.totalScore).toLocaleString('ja-JP');
-
-        document.getElementById('usageCount').textContent =
-            user.storeUsageCount;
-
-        document.getElementById('usageLimit').textContent =
-            user.storeUsageLimit;
-
-        displayHistory(user.scores);
-
-        userSection.classList.remove('d-none');
-        scoreSection.classList.remove('d-none');
-
-        const canAddScore =
-            user.isActive &&
-            !user.isEnded &&
-            user.storeUsageCount < user.storeUsageLimit;
-
-        registerButton.disabled = !canAddScore || registeringScore;
-
-        if (!canAddScore) {
-            showMessage(
-                'このユーザーは得点登録できません。アカウント状態と店舗利用回数を確認してください。',
-                'warning'
-            );
-        }
-    }
-
-    // ========================================
-    // 8. ユーザー情報取得（モック）
-    // API通信の代わりにサンプルデータを参照
-    // ========================================
-
-    async function getUserInfo(token) {
-        if (loadingUser) return;
-
-        const storeId = storeSelect.value;
-        const trimmedToken = token.trim();
-
-        if (!storeId) {
-            showMessage('担当店舗を選択してください。', 'warning');
-            return;
-        }
-
-        if (!trimmedToken) {
-            showMessage('QRコードのtokenを入力してください。', 'warning');
-            return;
-        }
-
-        loadingUser = true;
-        getUserButton.disabled = true;
-
-        hideUser();
-
-        try {
-            // 実際のAPI送信は行わない
-            // デモ用tokenなら対応するユーザーを表示する
-            const user = mockUsers[trimmedToken];
-
-            if (!user) {
-                showMessage(
-                    '該当するユーザーが見つかりません。デモ用tokenを入力してください（demo-token-001 / demo-token-002）。',
-                    'danger'
+            const getUserForm =
+                document.getElementById(
+                    'getUserForm'
                 );
-                return;
+
+            const scoreForm =
+                document.getElementById(
+                    'scoreForm'
+                );
+
+            const storeSelect =
+                document.getElementById(
+                    'storeId'
+                );
+
+            const tokenInput =
+                document.getElementById(
+                    'token'
+                );
+
+            const scoreInput =
+                document.getElementById(
+                    'score'
+                );
+
+            const messageArea =
+                document.getElementById(
+                    'messageArea'
+                );
+
+            const userSection =
+                document.getElementById(
+                    'userSection'
+                );
+
+            const scoreSection =
+                document.getElementById(
+                    'scoreSection'
+                );
+
+            const qrReaderElement =
+                document.getElementById(
+                    'qrReader'
+                );
+
+            const cameraStatus =
+                document.getElementById(
+                    'cameraStatus'
+                );
+
+            const startCameraButton =
+                document.getElementById(
+                    'startCameraButton'
+                );
+
+            const stopCameraButton =
+                document.getElementById(
+                    'stopCameraButton'
+                );
+
+            const getUserButton =
+                document.getElementById(
+                    'getUserButton'
+                );
+
+            const registerButton =
+                document.getElementById(
+                    'registerButton'
+                );
+
+            const scoreHistory =
+                document.getElementById(
+                    'scoreHistory'
+                );
+
+            function showMessage(
+                message,
+                type = 'info'
+            ) {
+
+                messageArea.textContent =
+                    message;
+
+                messageArea.className =
+                    `alert alert-${type}`;
             }
 
-            currentToken = trimmedToken;
-            currentStoreId = storeId;
+            function hideMessage() {
 
-            displayUser(user);
+                messageArea.textContent = '';
 
-            if (user.isActive && !user.isEnded &&
-                user.storeUsageCount < user.storeUsageLimit) {
-                showMessage('ユーザー情報を取得しました（モック）。', 'success');
+                messageArea.className =
+                    'alert d-none';
             }
 
-        } finally {
-            loadingUser = false;
-            getUserButton.disabled = false;
-        }
-    }
+            function setCameraStatus(
+                message,
+                type = 'secondary'
+            ) {
 
-    // ========================================
-    // 9. 手入力フォーム
-    // ========================================
+                cameraStatus.textContent =
+                    message;
 
-    getUserForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        getUserInfo(tokenInput.value);
-    });
-
-    // ========================================
-    // 10. QRコードカメラ停止
-    // ========================================
-
-    async function stopQrCamera() {
-        if (!html5QrCode || !cameraRunning) {
-            cameraRunning = false;
-            qrReaderElement.classList.add('d-none');
-            startCameraButton.disabled = false;
-            stopCameraButton.classList.add('d-none');
-            return;
-        }
-
-        try {
-            await html5QrCode.stop();
-        } catch (error) {
-            console.error('カメラ停止エラー:', error);
-        } finally {
-            cameraRunning = false;
-            qrReaderElement.classList.add('d-none');
-            startCameraButton.disabled = false;
-            stopCameraButton.classList.add('d-none');
-        }
-    }
-
-    // ========================================
-    // 11. QRコードカメラ起動
-    // ========================================
-
-    startCameraButton.addEventListener('click', async function() {
-        if (cameraRunning) return;
-
-        if (!storeSelect.value) {
-            showMessage('先に担当店舗を選択してください。', 'warning');
-            return;
-        }
-
-        if (typeof Html5Qrcode === 'undefined') {
-            setCameraStatus(
-                'QRコード読み取りライブラリを読み込めません。',
-                'danger'
-            );
-            return;
-        }
-
-        startCameraButton.disabled = true;
-        setCameraStatus('カメラを起動しています...', 'info');
-
-        try {
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode('qrReader');
+                cameraStatus.className =
+                    `alert alert-${type} py-2`;
             }
 
-            qrReaderElement.classList.remove('d-none');
+            function getCsrfToken() {
 
-            await html5QrCode.start(
-                { facingMode: 'environment' },
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 }
-                },
-                async function(decodedText) {
-                    if (processingQr || loadingUser) return;
+                const csrfInput =
+                    document.querySelector(
+                        '.csrf_token'
+                    );
 
-                    processingQr = true;
+                return csrfInput ?
+                    csrfInput.value :
+                    '';
+            }
 
-                    try {
-                        const scannedToken = decodedText.trim();
+            async function waitForCsrfToken(
+                timeoutMs = 10000
+            ) {
 
-                        if (!scannedToken) {
-                            setCameraStatus(
-                                'QRコードからtokenを取得できませんでした。',
-                                'warning'
-                            );
-                            return;
+                const start =
+                    Date.now();
+
+                while (
+                    Date.now() - start <
+                    timeoutMs
+                ) {
+
+                    const token =
+                        getCsrfToken();
+
+                    if (token) {
+                        return token;
+                    }
+
+                    await new Promise(
+                        resolve =>
+                        setTimeout(
+                            resolve,
+                            100
+                        )
+                    );
+                }
+
+                throw new Error(
+                    'CSRFトークンの取得に失敗しました。'
+                );
+            }
+
+            async function callApi(
+                url,
+                requestData = {}
+            ) {
+
+                await waitForCsrfToken();
+
+                const csrf_token =
+                    getCsrfToken();
+
+                const response =
+                    await fetch(url, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ...requestData,
+                            csrf_token
+                        })
+                    });
+
+                let data;
+
+                try {
+
+                    data =
+                        await response.json();
+
+                } catch {
+
+                    throw new Error(
+                        'サーバーから正しいJSONが返されませんでした。'
+                    );
+                }
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        '通信に失敗しました。'
+                    );
+                }
+
+                if (
+                    data.success !== true
+                ) {
+
+                    throw new Error(
+                        data.message ||
+                        '処理に失敗しました。'
+                    );
+                }
+
+                return data;
+            }
+
+            async function loadStores() {
+
+                const data =
+                    await callApi(
+                        STAFF_STORES_API
+                    );
+
+                stores =
+                    Array.isArray(
+                        data.stores
+                    ) ?
+                    data.stores : [];
+
+                storeSelect.replaceChildren();
+
+                const defaultOption =
+                    document.createElement(
+                        'option'
+                    );
+
+                defaultOption.value = '';
+
+                defaultOption.textContent =
+                    '店舗を選択してください';
+
+                storeSelect.appendChild(
+                    defaultOption
+                );
+
+                stores.forEach(store => {
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+                    option.value =
+                        String(store.id);
+
+                    option.textContent =
+                        store.name;
+
+                    storeSelect.appendChild(
+                        option
+                    );
+                });
+            }
+
+            function getStoreName(
+                storeId
+            ) {
+
+                const store =
+                    stores.find(
+                        item =>
+                        Number(item.id) ===
+                        Number(storeId)
+                    );
+
+                return store ?
+                    store.name :
+                    '不明な店舗';
+            }
+
+            function hideUser() {
+
+                currentUser = null;
+                currentToken = '';
+
+                userSection.classList.add(
+                    'd-none'
+                );
+
+                scoreSection.classList.add(
+                    'd-none'
+                );
+
+                scoreHistory.replaceChildren();
+
+                registerButton.disabled =
+                    true;
+            }
+
+            async function getUserInfo(
+                token
+            ) {
+
+                if (loadingUser) {
+                    return;
+                }
+
+                const storeId =
+                    storeSelect.value;
+
+                const trimmedToken =
+                    token.trim();
+
+                if (!storeId) {
+
+                    showMessage(
+                        '担当店舗を選択してください。',
+                        'warning'
+                    );
+
+                    return;
+                }
+
+                if (!trimmedToken) {
+
+                    showMessage(
+                        'tokenを入力してください。',
+                        'warning'
+                    );
+
+                    return;
+                }
+
+                loadingUser = true;
+
+                getUserButton.disabled =
+                    true;
+
+                hideUser();
+
+                try {
+
+                    const data =
+                        await callApi(
+                            SCORE_GET_API, {
+                                token: trimmedToken,
+                                store_id: Number(
+                                    storeId
+                                )
+                            }
+                        );
+
+                    currentToken =
+                        trimmedToken;
+
+                    displayUser(
+                        data
+                    );
+
+                    showMessage(
+                        'ユーザー情報を取得しました。',
+                        'success'
+                    );
+
+                } catch (error) {
+
+                    showMessage(
+                        error.message,
+                        'danger'
+                    );
+
+                } finally {
+
+                    loadingUser =
+                        false;
+
+                    getUserButton.disabled =
+                        false;
+                }
+            }
+
+            function displayUser(data) {
+
+                currentUser = data;
+
+                document.getElementById(
+                    'userId'
+                ).textContent = data.token;
+
+                const statusElement =
+                    document.getElementById(
+                        'accountStatus'
+                    );
+
+                if (data.user.isFinished) {
+
+                    statusElement.textContent =
+                        '終了済み';
+
+                    statusElement.className =
+                        'col-6 text-danger fw-bold';
+
+                } else if (
+                    data.user.isActive
+                ) {
+
+                    statusElement.textContent =
+                        '有効';
+
+                    statusElement.className =
+                        'col-6 text-success fw-bold';
+
+                } else {
+
+                    statusElement.textContent =
+                        '未アクティベート';
+
+                    statusElement.className =
+                        'col-6 text-danger fw-bold';
+                }
+
+                document.getElementById(
+                        'totalScore'
+                    ).textContent =
+                    Number(
+                        data.totalScore
+                    ).toLocaleString('ja-JP');
+
+                document.getElementById(
+                        'usageCount'
+                    ).textContent =
+                    data.storeUsageCount;
+
+                document.getElementById(
+                        'usageLimit'
+                    ).textContent =
+                    data.storeUsageLimit;
+
+                displayHistory(
+                    data.scores || []
+                );
+
+                userSection.classList.remove(
+                    'd-none'
+                );
+
+                scoreSection.classList.remove(
+                    'd-none'
+                );
+
+                registerButton.disabled = !data.canAddScore;
+            }
+
+            function displayHistory(scores) {
+
+                scoreHistory.replaceChildren();
+
+                if (
+                    !Array.isArray(scores) ||
+                    scores.length === 0
+                ) {
+
+                    const tr =
+                        document.createElement('tr');
+
+                    const td =
+                        document.createElement('td');
+
+                    td.colSpan = 3;
+                    td.className =
+                        'text-center text-secondary';
+
+                    td.textContent =
+                        '履歴はありません';
+
+                    tr.appendChild(td);
+
+                    scoreHistory.appendChild(tr);
+
+                    return;
+                }
+
+                scores.forEach(item => {
+
+                    const tr =
+                        document.createElement('tr');
+
+                    const dateCell =
+                        document.createElement('td');
+
+                    dateCell.textContent =
+                        item.createdAt ?? '-';
+
+                    const storeCell =
+                        document.createElement('td');
+
+                    storeCell.textContent =
+                        item.storeName ??
+                        getStoreName(
+                            item.storeId
+                        );
+
+                    const scoreCell =
+                        document.createElement('td');
+
+                    scoreCell.className =
+                        'text-end';
+
+                    scoreCell.textContent =
+                        Number(item.score)
+                        .toLocaleString('ja-JP');
+
+                    const actionCell =
+                        document.createElement('td');
+
+                    const deleteButton =
+                        document.createElement('button');
+
+                    deleteButton.type = 'button';
+
+                    deleteButton.className =
+                        'btn btn-sm btn-outline-danger';
+
+                    deleteButton.textContent =
+                        '削除';
+
+                    deleteButton.addEventListener(
+                        'click',
+                        async () => {
+
+                            const confirmed =
+                                confirm(
+                                    'この得点を削除しますか？'
+                                );
+
+                            if (!confirmed) {
+                                return;
+                            }
+
+                            try {
+
+                                const result =
+                                    await callApi(
+                                        SCORE_DELETE_API, {
+                                            score_id: item.scoreId
+                                        }
+                                    );
+
+                                showMessage(
+                                    result.message ||
+                                    '得点を削除しました。',
+                                    'success'
+                                );
+
+                                await getUserInfo(
+                                    currentToken
+                                );
+
+                            } catch (error) {
+
+                                showMessage(
+                                    error.message ||
+                                    '得点の削除に失敗しました。',
+                                    'danger'
+                                );
+                            }
                         }
+                    );
 
-                        tokenInput.value = scannedToken;
+                    actionCell.appendChild(
+                        deleteButton
+                    );
+
+                    tr.append(
+                        dateCell,
+                        storeCell,
+                        scoreCell,
+                        actionCell
+                    );
+
+                    scoreHistory.appendChild(tr);
+                });
+            }
+
+            getUserForm.addEventListener(
+                'submit',
+                async event => {
+
+                    event.preventDefault();
+
+                    await getUserInfo(
+                        tokenInput.value
+                    );
+                }
+            );
+
+            async function stopQrCamera() {
+
+                if (
+                    !html5QrCode ||
+                    !cameraRunning
+                ) {
+
+                    cameraRunning = false;
+
+                    qrReaderElement.classList.add(
+                        'd-none'
+                    );
+
+                    startCameraButton.disabled =
+                        false;
+
+                    stopCameraButton.classList.add(
+                        'd-none'
+                    );
+
+                    return;
+                }
+
+                try {
+
+                    await html5QrCode.stop();
+
+                } catch (error) {
+
+                    console.error(
+                        'カメラ停止エラー:',
+                        error
+                    );
+
+                } finally {
+
+                    cameraRunning = false;
+
+                    qrReaderElement.classList.add(
+                        'd-none'
+                    );
+
+                    startCameraButton.disabled =
+                        false;
+
+                    stopCameraButton.classList.add(
+                        'd-none'
+                    );
+                }
+            }
+
+            startCameraButton.addEventListener(
+                'click',
+                async () => {
+
+                    if (cameraRunning) {
+                        return;
+                    }
+
+                    if (
+                        !storeSelect.value
+                    ) {
+
+                        showMessage(
+                            '先に担当店舗を選択してください。',
+                            'warning'
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        typeof Html5Qrcode ===
+                        'undefined'
+                    ) {
 
                         setCameraStatus(
-                            '読み取り成功。ユーザー情報を表示します。',
+                            'QRコードライブラリを読み込めません。',
+                            'danger'
+                        );
+
+                        return;
+                    }
+
+                    startCameraButton.disabled =
+                        true;
+
+                    try {
+
+                        if (!html5QrCode) {
+
+                            html5QrCode =
+                                new Html5Qrcode(
+                                    'qrReader'
+                                );
+                        }
+
+                        qrReaderElement.classList.remove(
+                            'd-none'
+                        );
+
+                        await html5QrCode.start({
+                                facingMode: 'environment'
+                            }, {
+                                fps: 10,
+                                qrbox: {
+                                    width: 250,
+                                    height: 250
+                                }
+                            },
+                            async decodedText => {
+
+                                if (
+                                    processingQr
+                                ) {
+                                    return;
+                                }
+
+                                processingQr = true;
+
+                                try {
+
+                                    const token =
+                                        decodedText.trim();
+
+                                    tokenInput.value =
+                                        token;
+
+                                    await stopQrCamera();
+
+                                    await getUserInfo(
+                                        token
+                                    );
+
+                                } finally {
+
+                                    processingQr = false;
+                                }
+                            }
+                        );
+
+                        cameraRunning = true;
+
+                        stopCameraButton.classList.remove(
+                            'd-none'
+                        );
+
+                        setCameraStatus(
+                            'QRコードを読み取ってください。',
                             'success'
                         );
 
-                        await stopQrCamera();
-                        await getUserInfo(scannedToken);
+                    } catch (error) {
 
-                    } finally {
-                        processingQr = false;
+                        console.error(error);
+
+                        startCameraButton.disabled =
+                            false;
+
+                        setCameraStatus(
+                            'カメラを起動できませんでした。',
+                            'danger'
+                        );
                     }
-                },
-                function() {
-                    // QRコード未検出時は読み取りを続ける
                 }
             );
 
-            cameraRunning = true;
-            startCameraButton.disabled = true;
-            stopCameraButton.classList.remove('d-none');
+            stopCameraButton.addEventListener(
+                'click',
+                async () => {
 
-            setCameraStatus(
-                'カメラ起動中です。QRコードを枠内に合わせてください。',
-                'success'
+                    await stopQrCamera();
+
+                    setCameraStatus(
+                        'カメラを停止しました。',
+                        'secondary'
+                    );
+                }
             );
 
-        } catch (error) {
-            console.error('カメラ起動エラー:', error);
+            scoreForm.addEventListener(
+                'submit',
+                async event => {
 
-            cameraRunning = false;
-            qrReaderElement.classList.add('d-none');
-            startCameraButton.disabled = false;
-            stopCameraButton.classList.add('d-none');
+                    event.preventDefault();
 
-            setCameraStatus(
-                'カメラを起動できません。HTTPS接続やカメラの使用許可を確認してください。',
-                'danger'
-            );
-        }
-    });
+                    if (
+                        registeringScore
+                    ) {
+                        return;
+                    }
 
-    // ========================================
-    // 12. カメラ停止ボタン
-    // ========================================
+                    if (
+                        !currentToken
+                    ) {
 
-    stopCameraButton.addEventListener('click', async function() {
-        await stopQrCamera();
-        setCameraStatus('カメラを停止しました。', 'secondary');
-    });
+                        showMessage(
+                            '先にユーザー情報を取得してください。',
+                            'warning'
+                        );
 
-    // ========================================
-    // 13. 得点登録（モック）
-    // API送信せず、画面内のデータだけ更新
-    // ========================================
+                        return;
+                    }
 
-    scoreForm.addEventListener('submit', function(event) {
-        event.preventDefault();
+                    const score =
+                        Number(
+                            scoreInput.value
+                        );
 
-        if (registeringScore) return;
+                    if (
+                        !Number.isSafeInteger(
+                            score
+                        ) ||
+                        score <= 0
+                    ) {
 
-        if (!currentUser || !currentToken) {
-            showMessage(
-                '先にQRコードを読み取り、ユーザー情報を取得してください。',
-                'warning'
-            );
-            return;
-        }
+                        showMessage(
+                            'ポイントは1以上の整数で入力してください。',
+                            'warning'
+                        );
 
-        const canAddScore =
-            currentUser.isActive &&
-            !currentUser.isEnded &&
-            currentUser.storeUsageCount < currentUser.storeUsageLimit;
+                        return;
+                    }
 
-        if (!canAddScore) {
-            showMessage('このユーザーは得点登録できません。', 'warning');
-            return;
-        }
+                    registeringScore = true;
 
-        const rawScore = scoreInput.value;
-        const score = Number(rawScore);
+                    registerButton.disabled =
+                        true;
 
-        if (
-            rawScore.trim() === '' ||
-            !Number.isSafeInteger(score) ||
-            score < 0
-        ) {
-            showMessage(
-                'ポイントは0以上の整数で入力してください。',
-                'warning'
-            );
-            return;
-        }
+                    try {
 
-        if (!storeSelect.value) {
-            showMessage('担当店舗を選択してください。', 'warning');
-            return;
-        }
+                        const result =
+                            await callApi(
+                                SCORE_ADD_API, {
+                                    token: currentToken,
+                                    store_id: Number(
+                                        storeSelect.value
+                                    ),
+                                    score
+                                }
+                            );
 
-        registeringScore = true;
-        registerButton.disabled = true;
+                        scoreInput.value = '';
 
-        try {
-            // API送信の代わりにモックデータを更新
-            currentUser.totalScore += score;
+                        showMessage(
+                            result.message ||
+                            '得点を登録しました。',
+                            'success'
+                        );
 
-            currentUser.scores.push({
-                createdAt: new Date().toLocaleString('ja-JP', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }),
-                storeId: storeSelect.value,
-                score: score
-            });
+                        await getUserInfo(
+                            currentToken
+                        );
 
-            // 画面に反映
-            document.getElementById('totalScore').textContent =
-                currentUser.totalScore.toLocaleString('ja-JP');
+                    } catch (error) {
 
-            displayHistory(currentUser.scores);
+                        showMessage(
+                            error.message ||
+                            '得点登録に失敗しました。',
+                            'danger'
+                        );
 
-            scoreInput.value = '';
+                    } finally {
 
-            showMessage(
-                `${score}ポイントを登録しました（モック）。`,
-                'success'
+                        registeringScore =
+                            false;
+
+                        if (
+                            currentUser
+                        ) {
+
+                            registerButton.disabled = !currentUser.canAddScore;
+                        }
+                    }
+                }
             );
 
-        } catch (error) {
-            console.error(error);
-            showMessage('得点登録に失敗しました。', 'danger');
+            storeSelect.addEventListener(
+                'change',
+                async () => {
 
-        } finally {
-            registeringScore = false;
+                    await stopQrCamera();
 
-            const canAddScore =
-                currentUser &&
-                currentUser.isActive &&
-                !currentUser.isEnded &&
-                currentUser.storeUsageCount < currentUser.storeUsageLimit;
+                    hideUser();
 
-            registerButton.disabled = !canAddScore;
-        }
-    });
+                    tokenInput.value = '';
+                    scoreInput.value = '';
 
-    // ========================================
-    // 14. 店舗変更時
-    // ========================================
+                    hideMessage();
 
-    storeSelect.addEventListener('change', async function() {
-        await stopQrCamera();
+                    setCameraStatus(
+                        'カメラを起動してQRコードを読み取ってください。',
+                        'secondary'
+                    );
+                }
+            );
 
-        hideUser();
+            window.addEventListener(
+                'pagehide',
+                () => {
 
-        tokenInput.value = '';
-        scoreInput.value = '';
+                    if (
+                        html5QrCode &&
+                        cameraRunning
+                    ) {
 
-        hideMessage();
+                        html5QrCode
+                            .stop()
+                            .catch(error => {
+                                console.error(error);
+                            });
+                    }
+                }
+            );
 
-        setCameraStatus(
-            'カメラを起動してQRコードを読み取ってください。',
-            'secondary'
-        );
-    });
+            (async () => {
 
-    // ========================================
-    // 15. ページ離脱時にカメラを停止
-    // ========================================
+                try {
 
-    window.addEventListener('pagehide', function() {
-        if (html5QrCode && cameraRunning) {
-            html5QrCode.stop().catch(function(error) {
-                console.error('カメラ停止エラー:', error);
-            });
-        }
-    });
+                    await waitForCsrfToken();
 
-    // ========================================
-    // 16. 初期表示
-    // ========================================
+                    await loadStores();
 
-    loadStores();
+                    setCameraStatus(
+                        'カメラを起動してQRコードを読み取ってください。',
+                        'secondary'
+                    );
 
-})();
-</script>
+                } catch (error) {
 
+                    showMessage(
+                        error.message ||
+                        '初期化に失敗しました。',
+                        'danger'
+                    );
+                }
+
+            })();
+
+        })();
+    </script>
 </body>
+
 </html>
