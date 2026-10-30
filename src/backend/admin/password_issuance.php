@@ -214,6 +214,9 @@ if (!$csrf->validateToken($csrfToken)) {
 
 //ANCHOR - メイン処理
 
+// トランザクション開始状態
+$transactionStarted = false;
+
 try {
 
     // データベース接続
@@ -259,7 +262,12 @@ try {
         exit;
     }
 
+    // トランザクション開始
+    $db->beginTransaction();
+    $transactionStarted = true;
+
     // ユーザー確認
+    // FOR UPDATEで対象レコードをロックする
     $stmt = $db->exec(
         "
         SELECT
@@ -270,6 +278,7 @@ try {
         WHERE
             id = ?
         LIMIT 1
+        FOR UPDATE
         ",
         [$validatedUserId]
     );
@@ -278,6 +287,9 @@ try {
 
     // ユーザー存在確認
     if (!$user) {
+        $db->rollBack();
+        $transactionStarted = false;
+
         http_response_code(404);
 
         echo json_encode([
@@ -290,6 +302,9 @@ try {
 
     // 利用終了済み確認
     if ($user['finished_at'] !== null) {
+        $db->rollBack();
+        $transactionStarted = false;
+
         http_response_code(409);
 
         echo json_encode([
@@ -350,6 +365,7 @@ try {
             passcode_expired_at = ?
         WHERE
             id = ?
+            AND finished_at IS NULL
         ",
         [
             $hashedPasscode,
@@ -360,15 +376,14 @@ try {
 
     // 更新された行数を確認
     if ($stmt->rowCount() !== 1) {
-        http_response_code(409);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "パスコードを保存できませんでした。"
-        ], JSON_UNESCAPED_UNICODE);
-
-        exit;
+        throw new \RuntimeException(
+            'パスコードの保存に失敗しました。'
+        );
     }
+
+    // トランザクションをコミット
+    $db->commit();
+    $transactionStarted = false;
 
     // 成功レスポンス
     http_response_code(200);
@@ -383,6 +398,18 @@ try {
 } catch (\Throwable $e) {
 
     //ANCHOR - エラー処理
+
+    // トランザクション中の場合はロールバック
+    if ($transactionStarted) {
+        try {
+            $db->rollBack();
+        } catch (\Throwable $rollbackError) {
+            error_log(
+                'password_issuance.php Rollback Error: '
+                . $rollbackError->getMessage()
+            );
+        }
+    }
 
     // エラーログ出力
     error_log(
