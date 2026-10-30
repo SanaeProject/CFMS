@@ -17,7 +17,7 @@ declare(strict_types=1);
  *     "success": true/false,
  *     "message": "処理結果のメッセージ",
  *     "passcode": "発行された6桁のパスコード",
- *     "expiresAt": "パスコードの有効期限"
+ *     "expiresAt": "パスコードの有効期限（UTC）"
  * }
  */
 
@@ -321,10 +321,23 @@ try {
         );
     }
 
+    // UTC基準で現在時刻を取得
+    $now = new \DateTimeImmutable(
+        'now',
+        new \DateTimeZone('UTC')
+    );
+
     // 有効期限を10分後に設定
-    $passcodeExpiredAt = date(
-        'Y-m-d H:i:s',
-        time() + (10 * 60)
+    $expiresAt = $now->modify('+10 minutes');
+
+    // データベース保存用の日時（UTC）
+    $passcodeExpiredAt = $expiresAt->format(
+        'Y-m-d H:i:s'
+    );
+
+    // APIレスポンス用の日時（UTC）
+    $expiresAtResponse = $expiresAt->format(
+        'Y-m-d\TH:i:s\Z'
     );
 
     // パスコードと有効期限をデータベースに保存
@@ -352,7 +365,7 @@ try {
         "success" => true,
         "message" => "パスコードを発行しました。",
         "passcode" => $passcode,
-        "expiresAt" => $passcodeExpiredAt
+        "expiresAt" => $expiresAtResponse
     ], JSON_UNESCAPED_UNICODE);
 
 } catch (\Throwable $e) {
