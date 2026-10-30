@@ -16,10 +16,14 @@
     <meta name="keywords" content="nkc,名古屋工学院専門学校,文化祭">
 
     <title>パスコード発行</title>
-    <meta name="description" content="ユーザーのパスコード発行と無応答ユーザー確認">
 
-    <link rel="stylesheet"
-          href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
+    <meta
+        name="description"
+        content="ユーザーのパスコード発行と無応答ユーザー確認">
+
+    <link
+        rel="stylesheet"
+        href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
 
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -40,49 +44,56 @@
 
                     <form id="passcodeForm">
 
-                        <input type="hidden"
-                               class="csrf_token"
-                               name="csrf_token"
-                               value="">
+                        <input
+                            type="hidden"
+                            class="csrf_token"
+                            name="csrf_token"
+                            value="">
 
                         <div class="mb-3">
 
-                            <label for="userId"
-                                   class="form-label">
+                            <label
+                                for="userId"
+                                class="form-label">
                                 ユーザーID
                             </label>
 
-                            <input type="number"
-                                   class="form-control"
-                                   id="userId"
-                                   name="userId"
-                                   min="1"
-                                   required>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="userId"
+                                name="userId"
+                                min="1"
+                                required>
 
                         </div>
 
-                        <button type="submit"
-                                class="btn btn-primary">
+                        <button
+                            type="submit"
+                            class="btn btn-primary">
                             パスコード発行
                         </button>
 
                     </form>
 
-                    <div id="issueResult"
-                         class="mt-3">
+                    <div
+                        id="issueResult"
+                        class="mt-3">
                     </div>
 
                     <div class="mt-3">
 
-                        <label for="passcode"
-                               class="form-label">
+                        <label
+                            for="passcode"
+                            class="form-label">
                             発行されたパスコード
                         </label>
 
-                        <input type="text"
-                               class="form-control"
-                               id="passcode"
-                               readonly>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="passcode"
+                            readonly>
 
                     </div>
 
@@ -98,14 +109,16 @@
 
                 <div class="card-body">
 
-                    <button type="button"
-                            id="reloadButton"
-                            class="btn btn-secondary mb-3">
+                    <button
+                        type="button"
+                        id="reloadButton"
+                        class="btn btn-secondary mb-3">
                         再読み込み
                     </button>
 
-                    <div id="expiredResult"
-                         class="mb-3">
+                    <div
+                        id="expiredResult"
+                        class="mb-3">
                     </div>
 
                     <div class="table-responsive">
@@ -148,22 +161,38 @@
             const passcodeInput =
                 document.getElementById('passcode');
 
+            resultDiv.replaceChildren();
+
+            const alertDiv =
+                document.createElement('div');
+
             if (data.success) {
 
-                resultDiv.innerHTML =
-                    '<div class="alert alert-success">パスコードを発行しました。</div>';
+                alertDiv.className =
+                    'alert alert-success';
+
+                alertDiv.textContent =
+                    'パスコードを発行しました。';
 
                 passcodeInput.value =
                     data.passcode ?? '';
 
             } else {
 
-                resultDiv.innerHTML =
-                    '<div class="alert alert-danger">パスコードの発行に失敗しました。</div>';
+                alertDiv.className =
+                    'alert alert-danger';
+
+                alertDiv.textContent =
+                    data.message ??
+                    'パスコードの発行に失敗しました。';
 
                 passcodeInput.value = '';
 
             }
+
+            resultDiv.appendChild(
+                alertDiv
+            );
 
         }
 
@@ -180,7 +209,7 @@
                     document.querySelector('.csrf_token').value;
 
                 fetch(
-                    '<?= getenv("API_URL") ?>/api/user/issuePasscode',
+                    '<?= getenv("API_URL") ?>/api/admin/password_issuance',
                     {
                         method: 'POST',
                         credentials: 'include',
@@ -201,9 +230,23 @@
 
                     console.error(error);
 
-                    document.getElementById('issueResult')
-                        .innerHTML =
-                        '<div class="alert alert-danger">通信エラーが発生しました。</div>';
+                    const resultDiv =
+                        document.getElementById('issueResult');
+
+                    resultDiv.replaceChildren();
+
+                    const alertDiv =
+                        document.createElement('div');
+
+                    alertDiv.className =
+                        'alert alert-danger';
+
+                    alertDiv.textContent =
+                        '通信エラーが発生しました。';
+
+                    resultDiv.appendChild(
+                        alertDiv
+                    );
 
                 });
 
@@ -225,45 +268,98 @@
                 const table =
                     document.getElementById('expiredUsersTable');
 
-                table.innerHTML = '';
+                table.replaceChildren();
+
+                const resultDiv =
+                    document.getElementById('expiredResult');
+
+                resultDiv.replaceChildren();
 
                 if (!data.success) {
 
-                    document.getElementById('expiredResult')
-                        .innerHTML =
-                        '<div class="alert alert-danger">一覧の取得に失敗しました。</div>';
+                    const alertDiv =
+                        document.createElement('div');
+
+                    alertDiv.className =
+                        'alert alert-danger';
+
+                    alertDiv.textContent =
+                        data.message ??
+                        '一覧の取得に失敗しました。';
+
+                    resultDiv.appendChild(
+                        alertDiv
+                    );
 
                     return;
 
                 }
 
-                document.getElementById('expiredResult')
-                    .innerHTML = '';
+                data.expiredUsers.forEach(
+                    function(user) {
 
-                data.expiredUsers.forEach(function(user) {
+                        const row =
+                            document.createElement('tr');
 
-                    const row =
-                        document.createElement('tr');
+                        const userIdCell =
+                            document.createElement('td');
 
-                    row.innerHTML =
-                        `
-                        <td>${user.userId}</td>
-                        <td>${user.lastStoreName}</td>
-                        <td>${user.lastHeartbeatAt}</td>
-                        `;
+                        userIdCell.textContent =
+                            user.userId;
 
-                    table.appendChild(row);
+                        const storeNameCell =
+                            document.createElement('td');
 
-                });
+                        storeNameCell.textContent =
+                            user.lastStoreName;
+
+                        const heartbeatCell =
+                            document.createElement('td');
+
+                        heartbeatCell.textContent =
+                            user.lastHeartbeatAt;
+
+                        row.appendChild(
+                            userIdCell
+                        );
+
+                        row.appendChild(
+                            storeNameCell
+                        );
+
+                        row.appendChild(
+                            heartbeatCell
+                        );
+
+                        table.appendChild(
+                            row
+                        );
+
+                    }
+                );
 
             })
             .catch(error => {
 
                 console.error(error);
 
-                document.getElementById('expiredResult')
-                    .innerHTML =
-                    '<div class="alert alert-danger">通信エラーが発生しました。</div>';
+                const resultDiv =
+                    document.getElementById('expiredResult');
+
+                resultDiv.replaceChildren();
+
+                const alertDiv =
+                    document.createElement('div');
+
+                alertDiv.className =
+                    'alert alert-danger';
+
+                alertDiv.textContent =
+                    '通信エラーが発生しました。';
+
+                resultDiv.appendChild(
+                    alertDiv
+                );
 
             });
 

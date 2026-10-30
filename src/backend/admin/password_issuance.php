@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
     http_response_code(405);
 
     header('Allow: POST, OPTIONS');
@@ -43,10 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 
-$rawData = file_get_contents('php://input');
-$data = json_decode($rawData, true);
+$rawData = file_get_contents(
+    'php://input'
+);
+
+$data = json_decode(
+    $rawData,
+    true
+);
 
 if ($data === null) {
+
+    http_response_code(400);
 
     echo json_encode([
         "success" => false,
@@ -59,15 +68,21 @@ if ($data === null) {
 //!SECTION
 
 //SECTION: 入力のバリデーション
-$userId = $data['userId'] ?? null;
-$csrfToken = $data['csrfToken'] ?? null;
+$userId =
+    $data['userId'] ?? null;
 
-$sessionCsrfToken = new Lib\CSRFToken();
+$csrfToken =
+    $data['csrfToken'] ?? null;
+
+$sessionCsrfToken =
+    new Lib\CSRFToken();
 
 if (
     $userId === null ||
     $csrfToken === null
 ) {
+
+    http_response_code(400);
 
     echo json_encode([
         "success" => false,
@@ -88,6 +103,8 @@ if (
     $userId <= 0
 ) {
 
+    http_response_code(400);
+
     echo json_encode([
         "success" => false,
         "message" => "ユーザーIDが不正です。",
@@ -102,6 +119,8 @@ if (
         $csrfToken
     )
 ) {
+
+    http_response_code(403);
 
     echo json_encode([
         "success" => false,
@@ -140,6 +159,8 @@ try {
 
     if (!$user) {
 
+        http_response_code(404);
+
         echo json_encode([
             "success" => false,
             "message" => "対象ユーザーが存在しません。",
@@ -153,6 +174,8 @@ try {
         $user['finished_at']
         !== null
     ) {
+
+        http_response_code(409);
 
         echo json_encode([
             "success" => false,
@@ -195,6 +218,13 @@ try {
     ]);
 
 } catch (\Exception $e) {
+
+    error_log(
+        '[password_issuance] '
+        . $e->getMessage()
+        . PHP_EOL
+        . $e->getTraceAsString()
+    );
 
     http_response_code(500);
 
