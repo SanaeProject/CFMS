@@ -56,6 +56,7 @@ if ($data === null) {
 $scoreId = $data['score_id'] ?? null;
 $csrfToken = $data['csrf_token'] ?? null;
 
+$session = new Lib\Session();
 $sessionCsrfToken = new Lib\CSRFToken();
 
 if (
@@ -100,9 +101,6 @@ if (
 
 //SECTION: 処理の実行
 try {
-
-    $session = new Lib\Session();
-
     $staffId = $session->get('staff_id');
 
     if (empty($staffId)) {

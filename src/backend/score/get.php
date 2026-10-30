@@ -67,6 +67,7 @@ $token = trim($data['token'] ?? '');
 $storeId = $data['store_id'] ?? null;
 $csrfToken = $data['csrf_token'] ?? null;
 
+$session = new Lib\Session();
 $sessionCsrfToken = new Lib\CSRFToken();
 
 if ($token === '' || $storeId === null || $csrfToken === null) {
@@ -106,8 +107,6 @@ if (!$sessionCsrfToken->validateToken($csrfToken)) {
 
 //SECTION: 処理の実行
 try {
-
-    $session = new Lib\Session();
 
     $staffId = $session->get('staff_id');
 
