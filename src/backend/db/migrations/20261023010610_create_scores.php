@@ -21,34 +21,34 @@ final class CreateScores extends AbstractMigration
     {
         $table = $this->table('scores');
 
-    $table
-        ->addColumn('user_id', 'integer', [
-            'signed' => false,
-        ])
-        ->addColumn('staff_id', 'integer', [
-            'signed' => false,
-        ])
-        ->addColumn('store_id', 'integer', [
-            'signed' => false,
-        ])
-        ->addColumn('score', 'integer', [
-            'signed' => false,
-        ])
-        ->addColumn('created_at', 'datetime', [
-            'default' => 'CURRENT_TIMESTAMP',
-        ])
-        ->addForeignKey('user_id', 'users', 'id', [
-            'delete' => 'RESTRICT',
-            'update' => 'CASCADE',
-        ])
-        ->addForeignKey('staff_id', 'staff', 'id', [
-            'delete' => 'RESTRICT',
-            'update' => 'CASCADE',
-        ])
-        ->addForeignKey('store_id', 'stores', 'id', [
-            'delete' => 'RESTRICT',
-            'update' => 'CASCADE',
-        ])
-        ->create();
+        $table
+            ->addColumn('user_id', 'integer', [
+                'signed' => false,
+            ])
+            ->addColumn('staff_id', 'integer', [
+                'signed' => false,
+            ])
+            ->addColumn('store_id', 'integer', [
+                'signed' => false,
+            ])
+            ->addColumn('score', 'integer', [
+                'signed' => false,
+            ])
+            ->addColumn('created_at', 'datetime', [
+                'default' => 'CURRENT_TIMESTAMP',
+            ])
+            ->addForeignKey('user_id', 'users', 'id', [
+                'delete' => 'RESTRICT',
+                'update' => 'CASCADE',
+            ])
+            ->addForeignKey('staff_id', 'staff', 'id', [
+                'delete' => 'RESTRICT',
+                'update' => 'CASCADE',
+            ])
+            ->addForeignKey('store_id', 'stores', 'id', [
+                'delete' => 'RESTRICT',
+                'update' => 'CASCADE',
+            ])
+            ->create();
     }
 }
