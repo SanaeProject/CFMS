@@ -172,6 +172,24 @@
                             </div>
                         </div>
                     </div>
+                    <!-- 再ログイン用パスワード発行ページ -->
+                    <div class="col-12 col-md-6 col-xl-4" data-menu-page="admin">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="mb-3">
+                                    <span class="badge text-bg-dark">ADMIN</span>
+                                </div>
+                                <h3 class="h5 fw-bold">再ログイン用パスワード発行</h3>
+                                <p class="text-secondary flex-grow-1">
+                                    アカウントの再ログイン用パスワードを発行します。発行されたパスワードは、受付画面での再ログインに使用できます。
+                                </p>
+                                <a href="/admin/issue_passcode.php"
+                                    class="btn btn-outline-dark w-100">
+                                    再ログイン用パスワード発行ページを開く
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
