@@ -341,7 +341,7 @@ try {
     );
 
     // パスコードと有効期限をデータベースに保存
-    $db->exec(
+    $stmt = $db->exec(
         "
         UPDATE
             users
@@ -357,6 +357,18 @@ try {
             $validatedUserId
         ]
     );
+
+    // 更新された行数を確認
+    if ($stmt->rowCount() !== 1) {
+        http_response_code(409);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "パスコードを保存できませんでした。"
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
 
     // 成功レスポンス
     http_response_code(200);
