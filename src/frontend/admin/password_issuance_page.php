@@ -126,13 +126,11 @@
                         <table class="table table-striped">
 
                             <thead>
-
                                 <tr>
                                     <th>ユーザーID</th>
                                     <th>最後に利用した店舗</th>
                                     <th>最終Heartbeat時刻</th>
                                 </tr>
-
                             </thead>
 
                             <tbody id="expiredUsersTable">
@@ -156,15 +154,21 @@
         function renderIssueResult(data) {
 
             const resultDiv =
-                document.getElementById('issueResult');
+                document.getElementById(
+                    'issueResult'
+                );
 
             const passcodeInput =
-                document.getElementById('passcode');
+                document.getElementById(
+                    'passcode'
+                );
 
             resultDiv.replaceChildren();
 
             const alertDiv =
-                document.createElement('div');
+                document.createElement(
+                    'div'
+                );
 
             if (data.success) {
 
@@ -197,16 +201,23 @@
         }
 
         // ANCHOR - パスコード発行
-        document.getElementById('passcodeForm')
-            .addEventListener('submit', function(event) {
+        document.getElementById(
+            'passcodeForm'
+        ).addEventListener(
+            'submit',
+            function(event) {
 
                 event.preventDefault();
 
                 const userId =
-                    document.getElementById('userId').value;
+                    document.getElementById(
+                        'userId'
+                    ).value;
 
                 const csrfToken =
-                    document.querySelector('.csrf_token').value;
+                    document.querySelector(
+                        '.csrf_token'
+                    ).value;
 
                 fetch(
                     '<?= getenv("API_URL") ?>/api/admin/password_issuance',
@@ -214,7 +225,8 @@
                         method: 'POST',
                         credentials: 'include',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type':
+                                'application/json'
                         },
                         body: JSON.stringify({
                             userId,
@@ -222,35 +234,51 @@
                         })
                     }
                 )
-                .then(response => response.json())
-                .then(data => {
-                    renderIssueResult(data);
-                })
-                .catch(error => {
+                .then(
+                    response =>
+                    response.json()
+                )
+                .then(
+                    data => {
+                        renderIssueResult(
+                            data
+                        );
+                    }
+                )
+                .catch(
+                    error => {
 
-                    console.error(error);
+                        console.error(
+                            error
+                        );
 
-                    const resultDiv =
-                        document.getElementById('issueResult');
+                        const resultDiv =
+                            document.getElementById(
+                                'issueResult'
+                            );
 
-                    resultDiv.replaceChildren();
+                        resultDiv.replaceChildren();
 
-                    const alertDiv =
-                        document.createElement('div');
+                        const alertDiv =
+                            document.createElement(
+                                'div'
+                            );
 
-                    alertDiv.className =
-                        'alert alert-danger';
+                        alertDiv.className =
+                            'alert alert-danger';
 
-                    alertDiv.textContent =
-                        '通信エラーが発生しました。';
+                        alertDiv.textContent =
+                            '通信エラーが発生しました。';
 
-                    resultDiv.appendChild(
-                        alertDiv
-                    );
+                        resultDiv.appendChild(
+                            alertDiv
+                        );
 
-                });
+                    }
+                );
 
-            });
+            }
+        );
 
         // ANCHOR - 無応答ユーザー一覧取得
         function loadExpiredUsers() {
@@ -262,124 +290,164 @@
                     credentials: 'include'
                 }
             )
-            .then(response => response.json())
-            .then(data => {
+            .then(
+                response =>
+                response.json()
+            )
+            .then(
+                data => {
 
-                const table =
-                    document.getElementById('expiredUsersTable');
+                    const table =
+                        document.getElementById(
+                            'expiredUsersTable'
+                        );
 
-                table.replaceChildren();
+                    table.replaceChildren();
 
-                const resultDiv =
-                    document.getElementById('expiredResult');
+                    const resultDiv =
+                        document.getElementById(
+                            'expiredResult'
+                        );
 
-                resultDiv.replaceChildren();
+                    resultDiv.replaceChildren();
 
-                if (!data.success) {
+                    if (
+                        !data.success
+                    ) {
+
+                        const alertDiv =
+                            document.createElement(
+                                'div'
+                            );
+
+                        alertDiv.className =
+                            'alert alert-danger';
+
+                        alertDiv.textContent =
+                            data.message ??
+                            '一覧の取得に失敗しました。';
+
+                        resultDiv.appendChild(
+                            alertDiv
+                        );
+
+                        return;
+
+                    }
+
+                    data.expiredUsers.forEach(
+                        function(user) {
+
+                            const row =
+                                document.createElement(
+                                    'tr'
+                                );
+
+                            const userIdCell =
+                                document.createElement(
+                                    'td'
+                                );
+
+                            userIdCell.textContent =
+                                user.userId;
+
+                            const storeNameCell =
+                                document.createElement(
+                                    'td'
+                                );
+
+                            storeNameCell.textContent =
+                                user.lastStoreName;
+
+                            const heartbeatCell =
+                                document.createElement(
+                                    'td'
+                                );
+
+                            heartbeatCell.textContent =
+                                user.lastHeartbeatAt;
+
+                            row.appendChild(
+                                userIdCell
+                            );
+
+                            row.appendChild(
+                                storeNameCell
+                            );
+
+                            row.appendChild(
+                                heartbeatCell
+                            );
+
+                            table.appendChild(
+                                row
+                            );
+
+                        }
+                    );
+
+                }
+            )
+            .catch(
+                error => {
+
+                    console.error(
+                        error
+                    );
+
+                    const resultDiv =
+                        document.getElementById(
+                            'expiredResult'
+                        );
+
+                    resultDiv.replaceChildren();
 
                     const alertDiv =
-                        document.createElement('div');
+                        document.createElement(
+                            'div'
+                        );
 
                     alertDiv.className =
                         'alert alert-danger';
 
                     alertDiv.textContent =
-                        data.message ??
-                        '一覧の取得に失敗しました。';
+                        '通信エラーが発生しました。';
 
                     resultDiv.appendChild(
                         alertDiv
                     );
 
-                    return;
-
                 }
-
-                data.expiredUsers.forEach(
-                    function(user) {
-
-                        const row =
-                            document.createElement('tr');
-
-                        const userIdCell =
-                            document.createElement('td');
-
-                        userIdCell.textContent =
-                            user.userId;
-
-                        const storeNameCell =
-                            document.createElement('td');
-
-                        storeNameCell.textContent =
-                            user.lastStoreName;
-
-                        const heartbeatCell =
-                            document.createElement('td');
-
-                        heartbeatCell.textContent =
-                            user.lastHeartbeatAt;
-
-                        row.appendChild(
-                            userIdCell
-                        );
-
-                        row.appendChild(
-                            storeNameCell
-                        );
-
-                        row.appendChild(
-                            heartbeatCell
-                        );
-
-                        table.appendChild(
-                            row
-                        );
-
-                    }
-                );
-
-            })
-            .catch(error => {
-
-                console.error(error);
-
-                const resultDiv =
-                    document.getElementById('expiredResult');
-
-                resultDiv.replaceChildren();
-
-                const alertDiv =
-                    document.createElement('div');
-
-                alertDiv.className =
-                    'alert alert-danger';
-
-                alertDiv.textContent =
-                    '通信エラーが発生しました。';
-
-                resultDiv.appendChild(
-                    alertDiv
-                );
-
-            });
+            );
 
         }
 
         // ANCHOR - 一覧再読み込み
-        document.getElementById('reloadButton')
-            .addEventListener('click', function() {
+        document.getElementById(
+            'reloadButton'
+        ).addEventListener(
+            'click',
+            function() {
 
                 loadExpiredUsers();
 
-            });
+            }
+        );
 
         // ANCHOR - 初期表示
         loadExpiredUsers();
+
     </script>
 
-    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
+    <?php
+        include_once __DIR__
+            . '/../components/footer.php';
+    ?>
 
-    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
+    <?php
+        include_once __DIR__
+            . '/../components/fetch_csrf_token.php';
+    ?>
 
 </body>
 

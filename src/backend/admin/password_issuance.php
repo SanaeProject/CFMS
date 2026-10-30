@@ -204,24 +204,17 @@ try {
         PASSWORD_DEFAULT
     );
 
-    $expiresAt = date(
-        'Y-m-d H:i:s',
-        strtotime('+10 minutes')
-    );
-
     $db->exec(
         "
         UPDATE
             users
         SET
-            passcode = ?,
-            passcode_expires_at = ?
+            passcode = ?
         WHERE
             id = ?
         ",
         [
             $hashedPasscode,
-            $expiresAt,
             $userId
         ]
     );
