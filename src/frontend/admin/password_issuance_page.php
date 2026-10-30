@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="ja">
@@ -278,29 +279,35 @@
                         }
                     );
 
-        window.addEventListener(
-                    'csrf-token-ready',
-                    function() {
-                        document.getElementById(
-                            'issueButton'
-                        ).disabled = false;
-                    },
-                    { once: true }
-        );
-
-        window.addEventListener(
-                    'csrf-token-error',
-                    function() {
-                        renderIssueResult({
-                            success: false,
-                            message: 'CSRFトークンを取得できませんでした。ページを再読み込みしてください。'
-                        });
-                    },
-                    { once: true }
-        );
-
                 }
             );
+
+        // ANCHOR - CSRFトークン取得完了
+        window.addEventListener(
+            'csrf-token-ready',
+            function() {
+
+                document.getElementById(
+                    'issueButton'
+                ).disabled = false;
+
+            },
+            { once: true }
+        );
+
+        // ANCHOR - CSRFトークン取得失敗
+        window.addEventListener(
+            'csrf-token-error',
+            function() {
+
+                renderIssueResult({
+                    success: false,
+                    message: 'CSRFトークンを取得できませんでした。ページを再読み込みしてください。'
+                });
+
+            },
+            { once: true }
+        );
 
         // ANCHOR - 無応答ユーザー一覧取得
         function loadExpiredUsers() {
@@ -456,6 +463,7 @@
 
         // ANCHOR - 初期表示
         loadExpiredUsers();
+
     </script>
 
     <!-- フッター読み込み -->
