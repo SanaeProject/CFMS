@@ -16,8 +16,14 @@
  */
 
 //SECTION: 共通 - 入力の取得
+$appUrl = getenv("APP_URL");
+
+if ($appUrl === false) {
+    $appUrl = '*';
+}
+
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: " . getenv("APP_URL"));
+header("Access-Control-Allow-Origin: " . $appUrl);
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
@@ -28,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
     http_response_code(405);
 
     header('Allow: POST, OPTIONS');
@@ -42,7 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT']
+    . '/vendor/autoload.php';
 
 $rawData = file_get_contents(
     'php://input'
@@ -57,14 +63,13 @@ if (
     $data === null ||
     !is_array($data)
 ) {
-
     http_response_code(400);
 
     echo json_encode([
         "success" => false,
         "message" => "JSONの形式が不正です。",
         "data" => []
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     exit;
 }
@@ -84,14 +89,13 @@ if (
     $userId === null ||
     $csrfToken === null
 ) {
-
     http_response_code(400);
 
     echo json_encode([
         "success" => false,
         "message" => "必要なパラメータが不足しています。",
         "data" => []
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     exit;
 }
@@ -105,14 +109,13 @@ if (
     $userId === false ||
     $userId <= 0
 ) {
-
     http_response_code(400);
 
     echo json_encode([
         "success" => false,
         "message" => "ユーザーIDが不正です。",
         "data" => []
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     exit;
 }
@@ -122,14 +125,13 @@ if (
         $csrfToken
     )
 ) {
-
     http_response_code(403);
 
     echo json_encode([
         "success" => false,
         "message" => "CSRFトークンが無効です。",
         "data" => []
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     exit;
 }
@@ -140,6 +142,7 @@ try {
 
     $db = Lib\DB::connect();
 
+    //ANCHOR - ユーザー取得
     $stmt = $db->exec(
         "
         SELECT
@@ -157,18 +160,17 @@ try {
     );
 
     $user = $stmt->fetch(
-        PDO::FETCH_ASSOC
+        \PDO::FETCH_ASSOC
     );
 
     if (!$user) {
-
         http_response_code(404);
 
         echo json_encode([
             "success" => false,
             "message" => "対象ユーザーが存在しません。",
             "data" => []
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
 
         exit;
     }
@@ -177,18 +179,18 @@ try {
         ($user['finished_at'] ?? null)
         !== null
     ) {
-
         http_response_code(409);
 
         echo json_encode([
             "success" => false,
             "message" => "対象ユーザーは終了済みです。",
             "data" => []
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
 
         exit;
     }
 
+    //ANCHOR - パスコード生成
     $passcode = str_pad(
         (string) random_int(
             0,
@@ -204,6 +206,7 @@ try {
         PASSWORD_DEFAULT
     );
 
+    //ANCHOR - パスコード保存
     $db->exec(
         "
         UPDATE
@@ -223,7 +226,7 @@ try {
         "success" => true,
         "message" => "パスコードを発行しました。",
         "passcode" => $passcode
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
 } catch (\Exception $e) {
 
@@ -240,7 +243,7 @@ try {
         "success" => false,
         "message" => "処理中にエラーが発生しました。",
         "data" => []
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
 }
 //!SECTION

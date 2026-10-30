@@ -17,20 +17,18 @@
 
     <title>パスコード発行</title>
 
-    <meta
-        name="description"
-        content="ユーザーのパスコード発行と無応答ユーザー確認">
+    <meta name="description"
+          content="ユーザーのパスコード発行と無応答ユーザー確認">
 
-    <link
-        rel="stylesheet"
-        href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
 
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
     <main>
-        <div class="container mt-4">
+        <div class="container">
 
             <h1>パスコード発行</h1>
 
@@ -44,56 +42,49 @@
 
                     <form id="passcodeForm">
 
-                        <input
-                            type="hidden"
-                            class="csrf_token"
-                            name="csrf_token"
-                            value="">
+                        <input type="hidden"
+                               class="csrf_token"
+                               name="csrf_token"
+                               value="">
 
                         <div class="mb-3">
 
-                            <label
-                                for="userId"
-                                class="form-label">
+                            <label for="userId"
+                                   class="form-label">
                                 ユーザーID
                             </label>
 
-                            <input
-                                type="number"
-                                class="form-control"
-                                id="userId"
-                                name="userId"
-                                min="1"
-                                required>
+                            <input type="number"
+                                   class="form-control"
+                                   id="userId"
+                                   name="userId"
+                                   min="1"
+                                   required>
 
                         </div>
 
-                        <button
-                            type="submit"
-                            class="btn btn-primary">
+                        <button type="submit"
+                                class="btn btn-primary">
                             パスコード発行
                         </button>
 
                     </form>
 
-                    <div
-                        id="issueResult"
-                        class="mt-3">
+                    <div id="issueResult"
+                         class="mt-3">
                     </div>
 
                     <div class="mt-3">
 
-                        <label
-                            for="passcode"
-                            class="form-label">
+                        <label for="passcode"
+                               class="form-label">
                             発行されたパスコード
                         </label>
 
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="passcode"
-                            readonly>
+                        <input type="text"
+                               class="form-control"
+                               id="passcode"
+                               readonly>
 
                     </div>
 
@@ -109,16 +100,14 @@
 
                 <div class="card-body">
 
-                    <button
-                        type="button"
-                        id="reloadButton"
-                        class="btn btn-secondary mb-3">
+                    <button type="button"
+                            id="reloadButton"
+                            class="btn btn-secondary mb-3">
                         再読み込み
                     </button>
 
-                    <div
-                        id="expiredResult"
-                        class="mb-3">
+                    <div id="expiredResult"
+                         class="mb-3">
                     </div>
 
                     <div class="table-responsive">
@@ -201,84 +190,81 @@
         }
 
         // ANCHOR - パスコード発行
-        document.getElementById(
-            'passcodeForm'
-        ).addEventListener(
-            'submit',
-            function(event) {
+        document.getElementById('passcodeForm')
+            .addEventListener(
+                'submit',
+                function(event) {
 
-                event.preventDefault();
+                    event.preventDefault();
 
-                const userId =
-                    document.getElementById(
-                        'userId'
-                    ).value;
+                    const userId =
+                        document.getElementById(
+                            'userId'
+                        ).value;
 
-                const csrfToken =
-                    document.querySelector(
-                        '.csrf_token'
-                    ).value;
+                    const csrfToken =
+                        document.querySelector(
+                            '.csrf_token'
+                        ).value;
 
-                fetch(
-                    '<?= getenv("API_URL") ?>/api/admin/password_issuance',
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId,
-                            csrfToken
-                        })
-                    }
-                )
-                .then(
-                    response =>
-                    response.json()
-                )
-                .then(
-                    data => {
-                        renderIssueResult(
-                            data
-                        );
-                    }
-                )
-                .catch(
-                    error => {
+                    fetch(
+                        '<?= getenv("API_URL") ?>/api/admin/password_issuance',
+                        {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type':
+                                    'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId,
+                                csrfToken
+                            })
+                        }
+                    )
+                    .then(
+                        response =>
+                        response.json()
+                    )
+                    .then(
+                        data =>
+                        renderIssueResult(data)
+                    )
+                    .catch(
+                        error => {
 
-                        console.error(
-                            error
-                        );
-
-                        const resultDiv =
-                            document.getElementById(
-                                'issueResult'
+                            console.error(
+                                'Error:',
+                                error
                             );
 
-                        resultDiv.replaceChildren();
+                            const resultDiv =
+                                document.getElementById(
+                                    'issueResult'
+                                );
 
-                        const alertDiv =
-                            document.createElement(
-                                'div'
+                            resultDiv.replaceChildren();
+
+                            const alertDiv =
+                                document.createElement(
+                                    'div'
+                                );
+
+                            alertDiv.className =
+                                'alert alert-danger';
+
+                            alertDiv.textContent =
+                                '通信エラーが発生しました。';
+
+                            resultDiv.appendChild(
+                                alertDiv
                             );
 
-                        alertDiv.className =
-                            'alert alert-danger';
+                        }
+                    );
 
-                        alertDiv.textContent =
-                            '通信エラーが発生しました。';
-
-                        resultDiv.appendChild(
-                            alertDiv
-                        );
-
-                    }
-                );
-
-            }
-        );
+                }
+            );
 
         // ANCHOR - 無応答ユーザー一覧取得
         function loadExpiredUsers() {
@@ -311,9 +297,7 @@
 
                     resultDiv.replaceChildren();
 
-                    if (
-                        !data.success
-                    ) {
+                    if (!data.success) {
 
                         const alertDiv =
                             document.createElement(
@@ -392,6 +376,7 @@
                 error => {
 
                     console.error(
+                        'Error:',
                         error
                     );
 
@@ -423,31 +408,25 @@
         }
 
         // ANCHOR - 一覧再読み込み
-        document.getElementById(
-            'reloadButton'
-        ).addEventListener(
-            'click',
-            function() {
+        document.getElementById('reloadButton')
+            .addEventListener(
+                'click',
+                function() {
 
-                loadExpiredUsers();
+                    loadExpiredUsers();
 
-            }
-        );
+                }
+            );
 
         // ANCHOR - 初期表示
         loadExpiredUsers();
-
     </script>
 
-    <?php
-        include_once __DIR__
-            . '/../components/footer.php';
-    ?>
+    <!-- フッター読み込み -->
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
 
-    <?php
-        include_once __DIR__
-            . '/../components/fetch_csrf_token.php';
-    ?>
+    <!-- CSRFトークンの自動埋め込み -->
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
 
 </body>
 
