@@ -37,9 +37,9 @@ async function autoInjectCsrfToken(baseURL) {
       }
     });
 
-    console.log(`CSRFトークン: ${token}`);
-    console.log(`CSRFトークンを ${targetElements.length} 個の要素に埋め込みました`);
+    window.dispatchEvent(new Event('csrf-token-ready'));
   } catch (error) {
     console.error('CSRFトークンの自動埋め込みに失敗しました:', error);
+    window.dispatchEvent(new Event('csrf-token-error'));
   }
 }
