@@ -53,13 +53,16 @@ $data = json_decode(
     true
 );
 
-if ($data === null) {
+if (
+    $data === null ||
+    !is_array($data)
+) {
 
     http_response_code(400);
 
     echo json_encode([
         "success" => false,
-        "message" => "JSONのデコードに失敗しました。",
+        "message" => "JSONの形式が不正です。",
         "data" => []
     ]);
 
@@ -171,7 +174,7 @@ try {
     }
 
     if (
-        $user['finished_at']
+        ($user['finished_at'] ?? null)
         !== null
     ) {
 
@@ -196,17 +199,29 @@ try {
         STR_PAD_LEFT
     );
 
+    $hashedPasscode = password_hash(
+        $passcode,
+        PASSWORD_DEFAULT
+    );
+
+    $expiresAt = date(
+        'Y-m-d H:i:s',
+        strtotime('+10 minutes')
+    );
+
     $db->exec(
         "
         UPDATE
             users
         SET
-            passcode = ?
+            passcode = ?,
+            passcode_expires_at = ?
         WHERE
             id = ?
         ",
         [
-            $passcode,
+            $hashedPasscode,
+            $expiresAt,
             $userId
         ]
     );
