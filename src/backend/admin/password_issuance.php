@@ -18,8 +18,11 @@
 //SECTION: 共通 - 入力の取得
 $appUrl = getenv("APP_URL");
 
-if ($appUrl === false) {
-    $appUrl = '*';
+if (
+    $appUrl === false ||
+    $appUrl === ''
+) {
+    $appUrl = 'http://localhost';
 }
 
 header("Content-Type: application/json; charset=UTF-8");
@@ -34,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
     http_response_code(405);
 
     header('Allow: POST, OPTIONS');
@@ -63,6 +67,7 @@ if (
     $data === null ||
     !is_array($data)
 ) {
+
     http_response_code(400);
 
     echo json_encode([
@@ -89,6 +94,7 @@ if (
     $userId === null ||
     $csrfToken === null
 ) {
+
     http_response_code(400);
 
     echo json_encode([
@@ -109,6 +115,7 @@ if (
     $userId === false ||
     $userId <= 0
 ) {
+
     http_response_code(400);
 
     echo json_encode([
@@ -125,6 +132,7 @@ if (
         $csrfToken
     )
 ) {
+
     http_response_code(403);
 
     echo json_encode([
@@ -141,6 +149,62 @@ if (
 try {
 
     $db = Lib\DB::connect();
+
+    //ANCHOR - ログイン確認
+    $session =
+        new Lib\Session();
+
+    $staffId =
+        $session->get('staff_id');
+
+    if ($staffId === null) {
+
+        http_response_code(401);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "ログインしてください。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+    //ANCHOR - 管理者確認
+    $stmt = $db->exec(
+        "
+        SELECT
+            role
+        FROM
+            staff
+        WHERE
+            id = ?
+        LIMIT 1
+        ",
+        [
+            $staffId
+        ]
+    );
+
+    $staff = $stmt->fetch(
+        \PDO::FETCH_ASSOC
+    );
+
+    if (
+        !$staff ||
+        ($staff['role'] ?? null) !== 'admin'
+    ) {
+
+        http_response_code(403);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "権限がありません。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
 
     //ANCHOR - ユーザー取得
     $stmt = $db->exec(
@@ -164,6 +228,7 @@ try {
     );
 
     if (!$user) {
+
         http_response_code(404);
 
         echo json_encode([
@@ -179,6 +244,7 @@ try {
         ($user['finished_at'] ?? null)
         !== null
     ) {
+
         http_response_code(409);
 
         echo json_encode([

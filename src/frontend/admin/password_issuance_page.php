@@ -64,7 +64,9 @@
                         </div>
 
                         <button type="submit"
-                                class="btn btn-primary">
+                                id="issueButton"
+                                class="btn btn-primary"
+                                disabled>
                             パスコード発行
                         </button>
 
@@ -139,6 +141,11 @@
     <script>
         'use strict';
 
+        const apiUrl = <?= json_encode(
+            rtrim((string) (getenv('API_URL') ?: ''), '/'),
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+        ) ?>;
+
         // ANCHOR - パスコード発行結果表示
         function renderIssueResult(data) {
 
@@ -207,8 +214,16 @@
                             '.csrf_token'
                         ).value;
 
+                    if (!csrfToken) {
+                        renderIssueResult({
+                            success: false,
+                            message: 'CSRFトークンを取得できませんでした。ページを再読み込みしてください。'
+                        });
+                        return;
+                    }
+
                     fetch(
-                        '<?= getenv("API_URL") ?>/api/admin/password_issuance',
+                        `${apiUrl}/api/admin/password_issuance`,
                         {
                             method: 'POST',
                             credentials: 'include',
@@ -263,6 +278,27 @@
                         }
                     );
 
+        window.addEventListener(
+                    'csrf-token-ready',
+                    function() {
+                        document.getElementById(
+                            'issueButton'
+                        ).disabled = false;
+                    },
+                    { once: true }
+        );
+
+        window.addEventListener(
+                    'csrf-token-error',
+                    function() {
+                        renderIssueResult({
+                            success: false,
+                            message: 'CSRFトークンを取得できませんでした。ページを再読み込みしてください。'
+                        });
+                    },
+                    { once: true }
+        );
+
                 }
             );
 
@@ -270,7 +306,7 @@
         function loadExpiredUsers() {
 
             fetch(
-                '<?= getenv("API_URL") ?>/api/admin/session/expired',
+                `${apiUrl}/api/admin/session/expired`,
                 {
                     method: 'GET',
                     credentials: 'include'
