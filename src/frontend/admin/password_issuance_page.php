@@ -1,475 +1,414 @@
-
 <!DOCTYPE html>
-
 <html lang="ja">
 
 <head>
+    <!-- 基本設定 -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="乙成隼士,松本浩成,永島愛貴,塩川海響,星川誠弥,中島悠翔">
 
+    <!-- サイトアイコン -->
     <link rel="icon" href="/images/CFMS.ico" sizes="any">
     <link rel="icon" href="/images/CFMS.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/images/CFMS.png">
 
     <meta name="keywords" content="nkc,名古屋工学院専門学校,文化祭">
 
-    <title>パスコード発行</title>
+    <!-- OGP設定 -->
+    <meta property="og:title" content="パスコード発行 | CFMS">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nkc.sanae.dev">
+    <meta property="og:image" content="/images/CFMS.png">
+    <meta property="og:image:alt" content="CFMS">
+    <meta property="og:description" content="ユーザーの再ログイン用パスコードを発行するページ">
 
-    <meta name="description"
-          content="ユーザーのパスコード発行と無応答ユーザー確認">
+    <!-- ページ情報 -->
+    <title>パスコード発行 | CFMS</title>
+    <meta name="description" content="ユーザーの再ログイン用パスコードを発行するページです。">
 
-    <link rel="stylesheet"
-          href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
-
+    <!-- Bootstrap読み込み -->
+    <link rel="stylesheet" href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
-    <main>
+
+    <!-- メインコンテンツ -->
+    <main class="py-4">
         <div class="container">
 
-            <h1>パスコード発行</h1>
-
-            <div class="card mt-4">
-
-                <div class="card-header">
+            <!-- ページタイトル -->
+            <div class="mb-4">
+                <h1 class="h3 fw-bold">
                     パスコード発行
-                </div>
+                </h1>
+
+                <p class="text-secondary">
+                    ユーザーIDを入力して、再ログイン用のパスコードを発行します。
+                </p>
+            </div>
+
+            <!-- パスコード発行フォーム -->
+            <section class="card shadow-sm mb-4">
 
                 <div class="card-body">
 
-                    <form id="passcodeForm">
+                    <h2 class="h5 mb-3">
+                        パスコード発行
+                    </h2>
 
-                        <input type="hidden"
-                               class="csrf_token"
-                               name="csrf_token"
-                               value="">
+                    <form id="passcodeForm" novalidate>
 
+                        <!-- CSRFトークン -->
+                        <input
+                            type="hidden"
+                            class="csrf_token"
+                            name="csrfToken"
+                            value=""
+                        >
+
+                        <!-- ユーザーID -->
                         <div class="mb-3">
 
-                            <label for="userId"
-                                   class="form-label">
+                            <label for="userId" class="form-label">
                                 ユーザーID
+                                <span class="text-danger">*</span>
                             </label>
 
-                            <input type="number"
-                                   class="form-control"
-                                   id="userId"
-                                   name="userId"
-                                   min="1"
-                                   required>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="userId"
+                                name="userId"
+                                min="1"
+                                step="1"
+                                placeholder="ユーザーIDを入力"
+                                autocomplete="off"
+                                required
+                            >
+
+                            <div class="form-text">
+                                パスコードを発行する対象ユーザーのIDを入力してください。
+                            </div>
+
+                            <div class="invalid-feedback">
+                                1以上の整数を入力してください。
+                            </div>
 
                         </div>
 
-                        <button type="submit"
-                                id="issueButton"
-                                class="btn btn-primary"
-                                disabled>
-                            パスコード発行
+                        <!-- 発行ボタン -->
+                        <button
+                            type="submit"
+                            id="issueButton"
+                            class="btn btn-primary w-100"
+                        >
+                            パスコードを発行
                         </button>
 
                     </form>
 
-                    <div id="issueResult"
-                         class="mt-3">
-                    </div>
+                    <!-- 発行結果 -->
+                    <div id="issuanceResult" class="mt-3" aria-live="polite">
 
-                    <div class="mt-3">
+                        <!-- 成功時 -->
+                        <div id="passcodeArea" class="d-none">
 
-                        <label for="passcode"
-                               class="form-label">
-                            発行されたパスコード
-                        </label>
+                            <div class="alert alert-success">
+                                パスコードを発行しました。
+                                対象ユーザーに伝えてください。
+                            </div>
 
-                        <input type="text"
-                               class="form-control"
-                               id="passcode"
-                               readonly>
+                            <div class="mb-2 fw-bold">
+                                発行されたパスコード
+                            </div>
 
-                    </div>
+                            <div class="alert alert-primary text-center fs-4 fw-bold">
+                                <span id="passcodeValue"></span>
+                            </div>
 
-                </div>
+                            <p class="small text-secondary">
+                                このパスコードはユーザーの再ログイン時に使用します。
+                            </p>
 
-            </div>
+                        </div>
 
-            <div class="card mt-4">
-
-                <div class="card-header">
-                    無応答ユーザー一覧
-                </div>
-
-                <div class="card-body">
-
-                    <button type="button"
-                            id="reloadButton"
-                            class="btn btn-secondary mb-3">
-                        再読み込み
-                    </button>
-
-                    <div id="expiredResult"
-                         class="mb-3">
-                    </div>
-
-                    <div class="table-responsive">
-
-                        <table class="table table-striped">
-
-                            <thead>
-                                <tr>
-                                    <th>ユーザーID</th>
-                                    <th>最後に利用した店舗</th>
-                                    <th>最終Heartbeat時刻</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="expiredUsersTable">
-                            </tbody>
-
-                        </table>
+                        <!-- エラーメッセージ -->
+                        <div id="issuanceMessage"></div>
 
                     </div>
 
                 </div>
 
-            </div>
+            </section>
 
         </div>
     </main>
 
     <script>
-        'use strict';
+        //SECTION: API設定
 
-        const apiUrl = <?= json_encode(
-            rtrim((string) (getenv('API_URL') ?: ''), '/'),
-            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-        ) ?>;
+        const API_URL = <?= json_encode(rtrim((string) (getenv('API_URL') ?: ''), '/'), JSON_UNESCAPED_SLASHES) ?>;
 
-        // ANCHOR - パスコード発行結果表示
-        function renderIssueResult(data) {
+        const ISSUE_PASSCODE_API = `${API_URL}/user/issuePasscode`;
 
-            const resultDiv =
-                document.getElementById(
-                    'issueResult'
+        //!SECTION
+
+
+        //SECTION: DOM要素の取得
+
+        const passcodeForm = document.getElementById('passcodeForm');
+        const userIdInput = document.getElementById('userId');
+        const issueButton = document.getElementById('issueButton');
+
+        const passcodeArea = document.getElementById('passcodeArea');
+        const passcodeValue = document.getElementById('passcodeValue');
+        const issuanceMessage = document.getElementById('issuanceMessage');
+
+        //!SECTION
+
+
+        /**
+         * CSRFトークンを取得する
+         *
+         * @returns {string} CSRFトークン
+         */
+        function getCsrfToken() {
+
+            const csrfInput = document.querySelector('.csrf_token');
+
+            return csrfInput?.value || '';
+        }
+
+
+        /**
+         * APIレスポンスをJSONとして取得する
+         *
+         * @param {Response} response - fetchのレスポンス
+         * @returns {Promise<Object>} JSONレスポンス
+         */
+        async function parseApiResponse(response) {
+
+            const contentType = response.headers.get('content-type') || '';
+
+            if (!contentType.includes('application/json')) {
+
+                throw new Error(
+                    'サーバーから正しい形式のレスポンスが返されませんでした。'
+                );
+            }
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    responseData.message ||
+                    `通信に失敗しました。（HTTP ${response.status}）`
+                );
+            }
+
+            return responseData;
+        }
+
+
+        /**
+         * メッセージを表示する
+         *
+         * @param {HTMLElement} target - 表示先
+         * @param {string} message - メッセージ
+         * @param {string} type - Bootstrapのalert種別
+         */
+        function showMessage(target, message, type) {
+
+            target.replaceChildren();
+
+            const alert = document.createElement('div');
+
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+
+            target.appendChild(alert);
+        }
+
+
+        /**
+         * パスコード発行結果を表示する
+         *
+         * @param {Object} responseData - APIレスポンス
+         */
+        function renderPasscodeResult(responseData) {
+
+            passcodeArea.classList.add('d-none');
+            issuanceMessage.replaceChildren();
+
+            if (responseData.success !== true) {
+
+                showMessage(
+                    issuanceMessage,
+                    responseData.message || 'パスコードを発行できませんでした。',
+                    'danger'
                 );
 
-            const passcodeInput =
-                document.getElementById(
-                    'passcode'
+                return;
+            }
+
+            const passcode = responseData.passcode;
+
+            if (
+                typeof passcode !== 'string' ||
+                passcode.length === 0
+            ) {
+
+                showMessage(
+                    issuanceMessage,
+                    'パスコードを取得できませんでした。',
+                    'warning'
                 );
 
-            resultDiv.replaceChildren();
+                return;
+            }
 
-            const alertDiv =
-                document.createElement(
-                    'div'
+            // パスコードを表示
+            passcodeValue.textContent = passcode;
+
+            passcodeArea.classList.remove('d-none');
+        }
+
+
+        /**
+         * パスコード発行フォームの送信処理
+         */
+        passcodeForm.addEventListener('submit', async function(event) {
+
+            event.preventDefault();
+
+            //SECTION: 入力値の取得
+
+            const userIdValue = userIdInput.value.trim();
+            const csrfToken = getCsrfToken();
+
+            passcodeArea.classList.add('d-none');
+            issuanceMessage.replaceChildren();
+
+            userIdInput.classList.remove('is-invalid');
+
+            //!SECTION
+
+
+            //SECTION: 入力チェック
+
+            if (
+                userIdValue === '' ||
+                !/^[1-9]\d*$/.test(userIdValue) ||
+                !Number.isSafeInteger(Number(userIdValue))
+            ) {
+
+                userIdInput.classList.add('is-invalid');
+                userIdInput.focus();
+
+                return;
+            }
+
+            if (!csrfToken) {
+
+                showMessage(
+                    issuanceMessage,
+                    'CSRFトークンを取得できませんでした。ページを再読み込みしてください。',
+                    'danger'
                 );
 
-            if (data.success) {
+                return;
+            }
 
-                alertDiv.className =
-                    'alert alert-success';
+            //!SECTION
 
-                alertDiv.textContent =
-                    'パスコードを発行しました。';
 
-                passcodeInput.value =
-                    data.passcode ?? '';
+            //SECTION: API通信
 
-            } else {
+            issueButton.disabled = true;
+            issueButton.textContent = '発行中...';
 
-                alertDiv.className =
-                    'alert alert-danger';
+            try {
 
-                alertDiv.textContent =
-                    data.message ??
-                    'パスコードの発行に失敗しました。';
+                const response = await fetch(ISSUE_PASSCODE_API, {
 
-                passcodeInput.value = '';
+                    method: 'POST',
+
+                    credentials: 'include',
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    body: JSON.stringify({
+
+                        userId: Number(userIdValue),
+
+                        csrfToken: csrfToken
+
+                    })
+
+                });
+
+                const responseData = await parseApiResponse(response);
+
+                renderPasscodeResult(responseData);
+
+            } catch (error) {
+
+                console.error(
+                    'パスコード発行エラー:',
+                    error
+                );
+
+                showMessage(
+                    issuanceMessage,
+                    error.message ||
+                    'パスコード発行中にエラーが発生しました。',
+                    'danger'
+                );
+
+            } finally {
+
+                issueButton.disabled = false;
+                issueButton.textContent = 'パスコードを発行';
 
             }
 
-            resultDiv.appendChild(
-                alertDiv
-            );
+            //!SECTION
 
-        }
+        });
 
-        // ANCHOR - パスコード発行
-        document.getElementById('passcodeForm')
-            .addEventListener(
-                'submit',
-                function(event) {
 
-                    event.preventDefault();
+        /**
+         * 入力時のエラー表示を解除する
+         */
+        userIdInput.addEventListener('input', function() {
 
-                    const userId =
-                        document.getElementById(
-                            'userId'
-                        ).value;
+            this.classList.remove('is-invalid');
 
-                    const csrfToken =
-                        document.querySelector(
-                            '.csrf_token'
-                        ).value;
+        });
 
-                    if (!csrfToken) {
-                        renderIssueResult({
-                            success: false,
-                            message: 'CSRFトークンを取得できませんでした。ページを再読み込みしてください。'
-                        });
-                        return;
-                    }
 
-                    fetch(
-                        `${apiUrl}/api/admin/password_issuance`,
-                        {
-                            method: 'POST',
-                            credentials: 'include',
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
-                            body: JSON.stringify({
-                                userId,
-                                csrfToken
-                            })
-                        }
-                    )
-                    .then(
-                        response =>
-                        response.json()
-                    )
-                    .then(
-                        data =>
-                        renderIssueResult(data)
-                    )
-                    .catch(
-                        error => {
+        //SECTION: 初期処理
 
-                            console.error(
-                                'Error:',
-                                error
-                            );
+        document.addEventListener('DOMContentLoaded', function() {
 
-                            const resultDiv =
-                                document.getElementById(
-                                    'issueResult'
-                                );
+            userIdInput.focus();
 
-                            resultDiv.replaceChildren();
+        });
 
-                            const alertDiv =
-                                document.createElement(
-                                    'div'
-                                );
-
-                            alertDiv.className =
-                                'alert alert-danger';
-
-                            alertDiv.textContent =
-                                '通信エラーが発生しました。';
-
-                            resultDiv.appendChild(
-                                alertDiv
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-        // ANCHOR - CSRFトークン取得完了
-        window.addEventListener(
-            'csrf-token-ready',
-            function() {
-
-                document.getElementById(
-                    'issueButton'
-                ).disabled = false;
-
-            },
-            { once: true }
-        );
-
-        // ANCHOR - CSRFトークン取得失敗
-        window.addEventListener(
-            'csrf-token-error',
-            function() {
-
-                renderIssueResult({
-                    success: false,
-                    message: 'CSRFトークンを取得できませんでした。ページを再読み込みしてください。'
-                });
-
-            },
-            { once: true }
-        );
-
-        // ANCHOR - 無応答ユーザー一覧取得
-        function loadExpiredUsers() {
-
-            fetch(
-                `${apiUrl}/api/admin/session/expired`,
-                {
-                    method: 'GET',
-                    credentials: 'include'
-                }
-            )
-            .then(
-                response =>
-                response.json()
-            )
-            .then(
-                data => {
-
-                    const table =
-                        document.getElementById(
-                            'expiredUsersTable'
-                        );
-
-                    table.replaceChildren();
-
-                    const resultDiv =
-                        document.getElementById(
-                            'expiredResult'
-                        );
-
-                    resultDiv.replaceChildren();
-
-                    if (!data.success) {
-
-                        const alertDiv =
-                            document.createElement(
-                                'div'
-                            );
-
-                        alertDiv.className =
-                            'alert alert-danger';
-
-                        alertDiv.textContent =
-                            data.message ??
-                            '一覧の取得に失敗しました。';
-
-                        resultDiv.appendChild(
-                            alertDiv
-                        );
-
-                        return;
-
-                    }
-
-                    data.expiredUsers.forEach(
-                        function(user) {
-
-                            const row =
-                                document.createElement(
-                                    'tr'
-                                );
-
-                            const userIdCell =
-                                document.createElement(
-                                    'td'
-                                );
-
-                            userIdCell.textContent =
-                                user.userId;
-
-                            const storeNameCell =
-                                document.createElement(
-                                    'td'
-                                );
-
-                            storeNameCell.textContent =
-                                user.lastStoreName;
-
-                            const heartbeatCell =
-                                document.createElement(
-                                    'td'
-                                );
-
-                            heartbeatCell.textContent =
-                                user.lastHeartbeatAt;
-
-                            row.appendChild(
-                                userIdCell
-                            );
-
-                            row.appendChild(
-                                storeNameCell
-                            );
-
-                            row.appendChild(
-                                heartbeatCell
-                            );
-
-                            table.appendChild(
-                                row
-                            );
-
-                        }
-                    );
-
-                }
-            )
-            .catch(
-                error => {
-
-                    console.error(
-                        'Error:',
-                        error
-                    );
-
-                    const resultDiv =
-                        document.getElementById(
-                            'expiredResult'
-                        );
-
-                    resultDiv.replaceChildren();
-
-                    const alertDiv =
-                        document.createElement(
-                            'div'
-                        );
-
-                    alertDiv.className =
-                        'alert alert-danger';
-
-                    alertDiv.textContent =
-                        '通信エラーが発生しました。';
-
-                    resultDiv.appendChild(
-                        alertDiv
-                    );
-
-                }
-            );
-
-        }
-
-        // ANCHOR - 一覧再読み込み
-        document.getElementById('reloadButton')
-            .addEventListener(
-                'click',
-                function() {
-
-                    loadExpiredUsers();
-
-                }
-            );
-
-        // ANCHOR - 初期表示
-        loadExpiredUsers();
+        //!SECTION
 
     </script>
 
     <!-- フッター読み込み -->
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
 
-    <!-- CSRFトークンの自動埋め込み -->
+    <!-- CSRFトークン取得 -->
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
 
 </body>
