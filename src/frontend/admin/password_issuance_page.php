@@ -149,6 +149,8 @@
     </main>
 
     <script>
+        'use strict';
+
         //SECTION: API設定
 
         const API_URL = <?= json_encode(
@@ -192,21 +194,20 @@
 
 
         /**
-         * CSRFトークンの取得状態に応じてボタンを制御する
+         * CSRFトークンの有無に応じて発行ボタンを制御する
          */
         function updateIssueButton() {
 
-            const csrfToken = getCsrfToken();
+            const hasCsrfToken = Boolean(getCsrfToken());
 
-            if (csrfToken) {
+            issueButton.disabled = !hasCsrfToken;
 
-                issueButton.disabled = false;
+            if (
+                hasCsrfToken &&
+                issueButton.textContent.trim() !== '発行中...'
+            ) {
+
                 issueButton.textContent = 'パスコードを発行';
-
-            } else {
-
-                issueButton.disabled = true;
-                issueButton.textContent = 'CSRFトークン取得中...';
 
             }
         }
@@ -309,56 +310,56 @@
 
         //SECTION: CSRFトークン取得イベント
 
-        /**
-         * CSRFトークン取得完了イベント
-         *
-         * fetch_csrf_token.php側で取得完了時に発火する
-         */
-        document.addEventListener('csrf-token-ready', function() {
 
-            updateIssueButton();
+        // ANCHOR - CSRFトークン取得完了
 
-            if (getCsrfToken()) {
+        window.addEventListener(
+            'csrf-token-ready',
+            function() {
 
-                issuanceMessage.replaceChildren();
+                updateIssueButton();
 
-            } else {
+                if (getCsrfToken()) {
 
-                issueButton.disabled = true;
+                    issuanceMessage.replaceChildren();
+
+                } else {
+
+                    issueButton.disabled = true;
+
+                    showMessage(
+                        issuanceMessage,
+                        'CSRFトークンを取得できませんでした。',
+                        'danger'
+                    );
+
+                }
+
+            },
+            { once: true }
+        );
+
+
+        // ANCHOR - CSRFトークン取得失敗
+
+        window.addEventListener(
+            'csrf-token-error',
+            function() {
+
+                updateIssueButton();
 
                 showMessage(
                     issuanceMessage,
-                    'CSRFトークンを取得できませんでした。ページを再読み込みしてください。',
+                    'CSRFトークンの取得に失敗しました。ページを再読み込みしてください。',
                     'danger'
                 );
 
-            }
-
-        });
-
-
-        /**
-         * CSRFトークン取得失敗イベント
-         *
-         * fetch_csrf_token.php側で取得失敗時に発火する
-         */
-        document.addEventListener('csrf-token-error', function() {
-
-            issueButton.disabled = true;
-            issueButton.textContent = 'パスコードを発行';
-
-            showMessage(
-                issuanceMessage,
-                'CSRFトークンの取得に失敗しました。ページを再読み込みしてください。',
-                'danger'
-            );
-
-        });
+            },
+            { once: true }
+        );
 
         //!SECTION
 
-
-        //SECTION: パスコード発行処理
 
         /**
          * パスコード発行フォームの送信処理
@@ -380,24 +381,6 @@
             //!SECTION
 
 
-            //SECTION: CSRFトークン確認
-
-            if (!csrfToken) {
-
-                issueButton.disabled = true;
-
-                showMessage(
-                    issuanceMessage,
-                    'CSRFトークンを取得できませんでした。ページを再読み込みしてください。',
-                    'danger'
-                );
-
-                return;
-            }
-
-            //!SECTION
-
-
             //SECTION: 入力チェック
 
             if (
@@ -408,6 +391,19 @@
 
                 userIdInput.classList.add('is-invalid');
                 userIdInput.focus();
+
+                return;
+            }
+
+            if (!csrfToken) {
+
+                showMessage(
+                    issuanceMessage,
+                    'CSRFトークンを取得できませんでした。ページを再読み込みしてください。',
+                    'danger'
+                );
+
+                updateIssueButton();
 
                 return;
             }
@@ -462,8 +458,13 @@
 
             } finally {
 
-                // CSRFトークンが取得済みの場合のみ再有効化
                 updateIssueButton();
+
+                if (getCsrfToken()) {
+
+                    issueButton.textContent = 'パスコードを発行';
+
+                }
 
             }
 
@@ -471,10 +472,6 @@
 
         });
 
-        //!SECTION
-
-
-        //SECTION: 入力イベント
 
         /**
          * 入力時のエラー表示を解除する
@@ -485,14 +482,11 @@
 
         });
 
-        //!SECTION
-
 
         //SECTION: 初期処理
 
         document.addEventListener('DOMContentLoaded', function() {
 
-            // 初期状態のCSRFトークンを確認
             updateIssueButton();
 
             userIdInput.focus();

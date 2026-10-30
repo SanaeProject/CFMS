@@ -15,6 +15,7 @@
  * }
  */
 
+
 //SECTION: 共通 - 入力の取得
 
 $appUrl = getenv("APP_URL");
@@ -32,6 +33,7 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
+
 // OPTIONSリクエストへの対応
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
@@ -39,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
     exit;
 }
+
 
 // POSTメソッドの確認
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -56,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+
 // JSONデータの取得
 $rawData = file_get_contents(
     'php://input'
@@ -65,6 +69,7 @@ $data = json_decode(
     $rawData,
     true
 );
+
 
 // JSON形式の確認
 if (
@@ -86,6 +91,7 @@ if (
 //!SECTION
 
 
+
 //SECTION: 処理の実行
 
 try {
@@ -101,11 +107,6 @@ try {
 
     $csrfToken =
         $data['csrfToken'] ?? null;
-
-
-    //ANCHOR - CSRFトークンの初期化
-    $sessionCsrfToken =
-        new Lib\CSRFToken();
 
 
     //ANCHOR - 必須項目の確認
@@ -149,6 +150,29 @@ try {
     }
 
 
+    //ANCHOR - ログイン確認
+    $session = new Lib\Session();
+
+    $staffId = $session->get('staff_id');
+
+    if ($staffId === null) {
+
+        http_response_code(401);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "ログインしてください。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+
+    //ANCHOR - CSRFトークンの初期化
+    $sessionCsrfToken = new Lib\CSRFToken();
+
+
     //ANCHOR - CSRFトークンの検証
     if (
         !$sessionCsrfToken->validateToken(
@@ -170,27 +194,6 @@ try {
 
     //ANCHOR - データベース接続
     $db = Lib\DB::connect();
-
-
-    //ANCHOR - ログイン確認
-    $session =
-        new Lib\Session();
-
-    $staffId =
-        $session->get('staff_id');
-
-    if ($staffId === null) {
-
-        http_response_code(401);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "ログインしてください。",
-            "data" => []
-        ], JSON_UNESCAPED_UNICODE);
-
-        exit;
-    }
 
 
     //ANCHOR - 管理者確認
