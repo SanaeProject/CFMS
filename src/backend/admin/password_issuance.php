@@ -23,13 +23,6 @@ declare(strict_types=1);
 
 //SECTION: 共通 - 入力の取得
 
-// Composerオートローダー読み込み
-require_once __DIR__ . '/../../../vendor/autoload.php';
-
-// セッション初期化
-// header() やレスポンス出力より前に実行する
-$session = new Lib\Session();
-
 // CORS設定
 $appUrl = getenv("APP_URL");
 
@@ -47,6 +40,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
 // CORSプリフライトリクエスト
+// OPTIONSの場合はセッションを開始せずに終了する
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
@@ -64,6 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
     exit;
 }
+
+// Composerオートローダー読み込み
+require_once __DIR__ . '/../../../vendor/autoload.php';
+
+// セッション初期化
+// POSTリクエストの場合のみ実行する
+$session = new Lib\Session();
 
 // JSON形式のリクエストを取得
 $rawData = file_get_contents('php://input');
