@@ -197,17 +197,23 @@ try {
         exit;
     }
 
+    // tokenからユーザーIDを取得
     $stmt = $db->exec(
         "SELECT
-            id,
-            token,
-            is_active,
-            finished_at
+            id
          FROM users
          WHERE token = ?",
         [$token]
     );
+    $user_id = $stmt->fetch(PDO::FETCH_ASSOC)['id'] ?? null;
 
+    $db->begin();
+
+    // ロック
+    $stmt = $db->exec(
+        "SELECT id, is_active, finished_at FROM users WHERE id = ? FOR UPDATE",
+        [$user_id]
+    );
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
@@ -236,14 +242,6 @@ try {
 
     $usageLimit = (int)(
         getenv('GAME_CNT') ?: 3
-    );
-
-    $db->begin();
-
-    // ロック
-    $db->exec(
-        "SELECT id FROM users WHERE id = ? FOR UPDATE",
-        [$user['id']]
     );
 
     $stmt = $db->exec(
