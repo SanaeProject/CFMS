@@ -217,6 +217,7 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
+        $db->rollback();
         echo json_encode([
             "success" => false,
             "message" => "ユーザーが存在しません。"
@@ -225,6 +226,7 @@ try {
     }
 
     if (!(bool)$user['is_active']) {
+        $db->rollback();
         echo json_encode([
             "success" => false,
             "message" => "ユーザーが未アクティベートです。"
@@ -233,6 +235,7 @@ try {
     }
 
     if ($user['finished_at'] !== null) {
+        $db->rollback();
         echo json_encode([
             "success" => false,
             "message" => "終了済みユーザーです。"
