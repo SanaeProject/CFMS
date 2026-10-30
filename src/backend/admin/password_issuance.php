@@ -1,3 +1,4 @@
+
 <?php
 
 /**
@@ -64,35 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-
-// JSONデータの取得
-$rawData = file_get_contents(
-    'php://input'
-);
-
-$data = json_decode(
-    $rawData,
-    true
-);
-
-
-// JSON形式の確認
-if (
-    $data === null ||
-    !is_array($data)
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "JSONの形式が不正です。",
-        "data" => []
-    ], JSON_UNESCAPED_UNICODE);
-
-    exit;
-}
-
 //!SECTION
 
 
@@ -105,12 +77,61 @@ try {
     require_once __DIR__ . '/../../../vendor/autoload.php';
 
 
-    //ANCHOR - 入力値の取得
-    $userId =
-        $data['userId'] ?? null;
+    //ANCHOR - セッション初期化
+    // レスポンス本文を出力する前にセッションを開始する
+    $session = new Lib\Session();
 
-    $csrfToken =
-        $data['csrfToken'] ?? null;
+
+    //ANCHOR - ログイン確認
+    $staffId = $session->get('staff_id');
+
+    if ($staffId === null) {
+
+        http_response_code(401);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "ログインしてください。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+
+    //ANCHOR - JSONデータの取得
+    $rawData = file_get_contents(
+        'php://input'
+    );
+
+    $data = json_decode(
+        $rawData,
+        true
+    );
+
+
+    //ANCHOR - JSON形式の確認
+    if (
+        json_last_error() !== JSON_ERROR_NONE ||
+        !is_array($data)
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "JSONの形式が不正です。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+
+    //ANCHOR - 入力値の取得
+    $userId = $data['userId'] ?? null;
+
+    $csrfToken = $data['csrfToken'] ?? null;
 
 
     //ANCHOR - 必須項目の確認
@@ -128,6 +149,44 @@ try {
         ], JSON_UNESCAPED_UNICODE);
 
         exit;
+    }
+
+
+    //ANCHOR - ユーザーIDの型確認
+    if (
+        !is_int($userId) &&
+        !is_string($userId)
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "ユーザーIDの形式が不正です。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+
+    //ANCHOR - ユーザーIDの空文字確認
+    if (is_string($userId)) {
+
+        $userId = trim($userId);
+
+        if ($userId === '') {
+
+            http_response_code(400);
+
+            echo json_encode([
+                "success" => false,
+                "message" => "ユーザーIDを入力してください。",
+                "data" => []
+            ], JSON_UNESCAPED_UNICODE);
+
+            exit;
+        }
     }
 
 
@@ -154,18 +213,31 @@ try {
     }
 
 
-    //ANCHOR - ログイン確認
-    $session = new Lib\Session();
+    //ANCHOR - CSRFトークンの型確認
+    if (!is_string($csrfToken)) {
 
-    $staffId = $session->get('staff_id');
-
-    if ($staffId === null) {
-
-        http_response_code(401);
+        http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" => "ログインしてください。",
+            "message" => "CSRFトークンの形式が不正です。",
+            "data" => []
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+
+    //ANCHOR - CSRFトークンの空文字確認
+    $csrfToken = trim($csrfToken);
+
+    if ($csrfToken === '') {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "CSRFトークンが入力されていません。",
             "data" => []
         ], JSON_UNESCAPED_UNICODE);
 
@@ -274,8 +346,7 @@ try {
 
     //ANCHOR - 終了済みユーザーの確認
     if (
-        ($user['finished_at'] ?? null)
-        !== null
+        ($user['finished_at'] ?? null) !== null
     ) {
 
         http_response_code(409);
@@ -308,6 +379,22 @@ try {
         PASSWORD_DEFAULT
     );
 
+    if ($hashedPasscode === false) {
+
+        throw new \RuntimeException(
+            'パスコードのハッシュ化に失敗しました。'
+        );
+    }
+
+
+    //ANCHOR - パスコード有効期限の設定
+    // 発行時刻から10分後を有効期限にする
+    // PHPとデータベースのタイムゾーンを統一すること
+    $passcodeExpiredAt = date(
+        'Y-m-d H:i:s',
+        time() + (10 * 60)
+    );
+
 
     //ANCHOR - パスコード保存
     $db->exec(
@@ -315,12 +402,14 @@ try {
         UPDATE
             users
         SET
-            passcode = ?
+            passcode = ?,
+            passcode_expired_at = ?
         WHERE
             id = ?
         ",
         [
             $hashedPasscode,
+            $passcodeExpiredAt,
             $userId
         ]
     );
