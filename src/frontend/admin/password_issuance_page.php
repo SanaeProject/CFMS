@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -162,7 +163,8 @@
             JSON_HEX_AMP
         ) ?>;
 
-        const ISSUE_PASSCODE_API = `${API_URL}/user/issuePasscode`;
+        // バックエンドの配置先に合わせて修正
+        const ISSUE_PASSCODE_API = `${API_URL}/admin/password_issuance.php`;
 
         //!SECTION
 

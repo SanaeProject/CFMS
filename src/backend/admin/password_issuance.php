@@ -1,3 +1,4 @@
+
 <?php
 
 /**
@@ -18,14 +19,19 @@
 
 //SECTION: 共通 - 入力の取得
 
+// アプリケーションURLの取得
 $appUrl = getenv("APP_URL");
 
+// APP_URLが未設定の場合
 if (
     $appUrl === false ||
     $appUrl === ''
 ) {
     $appUrl = 'http://localhost';
 }
+
+// 末尾のスラッシュを削除
+$appUrl = rtrim($appUrl, '/');
 
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: " . $appUrl);
@@ -97,8 +103,7 @@ if (
 try {
 
     //ANCHOR - ライブラリ読み込み
-    require_once $_SERVER['DOCUMENT_ROOT']
-        . '/vendor/autoload.php';
+    require_once __DIR__ . '/../../../vendor/autoload.php';
 
 
     //ANCHOR - 入力値の取得
