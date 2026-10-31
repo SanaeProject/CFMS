@@ -68,7 +68,7 @@
             }
         }
 
-        //!SECTION
+        /*!SECTION*/
     </style>
 </head>
 
@@ -147,7 +147,7 @@
                     <div class="card-body">
                         <div class="mb-4">
                             <div class="info-label mb-1">対象ユーザーID</div>
-                            <div id="userId" class="fs-5 fw-bold">未検索</div>
+                            <div id="userToken" class="fs-5 fw-bold">未検索</div>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -214,7 +214,7 @@
         const stopScannerButton = document.getElementById('stopScannerButton');
         const resultDiv = document.getElementById('result');
 
-        const userIdDiv = document.getElementById('userId');
+        const userTokenDiv = document.getElementById('userToken');
         const activeStatusSpan = document.getElementById('activeStatus');
         const finishedStatusSpan = document.getElementById('finishedStatus');
         const finishedAtDiv = document.getElementById('finishedAt');
@@ -260,7 +260,7 @@
          * @param {Object} user ユーザー情報
          */
         function renderUser(user) {
-            userIdDiv.textContent = String(user.token);
+            userTokenDiv.textContent = String(user.token);
             updateBadge(
                 activeStatusSpan,
                 user.isActive ? '有効' : '未アクティブ',
@@ -292,7 +292,7 @@
          */
         function resetUserInfo() {
             currentUser = null;
-            userIdDiv.textContent = '未検索';
+            userTokenDiv.textContent = '未検索';
             updateBadge(activeStatusSpan, '未確認', 'secondary');
             updateBadge(finishedStatusSpan, '未確認', 'secondary');
             finishedAtDiv.textContent = '未確認';
@@ -363,7 +363,7 @@
 
                 currentUser = {
                     token,
-                    userId: user.token,
+                    userToken: user.token,
                     isActive: user.isActive,
                     finishedAt: user.finishedAt ?? null,
                     totalScore: user.totalScore
@@ -407,7 +407,7 @@
             }
 
             const targetToken = currentUser.token;
-            const targetUserId = currentUser.token;
+            const targetuserToken = currentUser.token;
             const csrfToken = document.querySelector('.csrf_token').value;
 
             isFinishing = true;
@@ -436,7 +436,7 @@
                 if (
                     !currentUser ||
                     currentUser.token !== targetToken ||
-                    String(currentUser.token) !== String(targetUserId)
+                    String(currentUser.token) !== String(targetuserToken)
                 ) {
                     showResult(
                         '終了処理の結果を確認できません。対象ユーザーを再検索してください。',
