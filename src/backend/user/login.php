@@ -58,6 +58,7 @@ $token = trim($data['token'] ?? '');
 $passcode = $data['passcode'] ?? null;
 $csrfToken = $data['csrf_token'] ?? null;
 
+$session = new Lib\Session();
 $sessionCsrfToken = new Lib\CSRFToken();
 
 if (
@@ -152,23 +153,20 @@ try {
         exit;
     }
 
-    $session = new Lib\Session();
-
     $db->begin();
-
-    $session->set(
-        'user_id',
-        $user['token']
-    );
-
     $db->exec(
         "UPDATE users
          SET passcode = NULL
          WHERE token = ?",
         [$user['token']]
     );
-
     $db->commit();
+
+    $session->regenerateId(true);
+    $session->set(
+        'user_id',
+        $user['token']
+    );
 
     echo json_encode([
         "success" => true
