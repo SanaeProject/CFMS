@@ -152,7 +152,7 @@
             <!-- 再ログイン -->
             <section class="card shadow-sm mb-3">
                 <div class="card-body p-3">
-                    <h2 class="h5 fw-bold mb-2">再ログイン</h2>
+                    <h2 class="h5 fw-bold mb-2">ログイン関係操作</h2>
 
                     <p class="text-secondary small">
                         セッション切れや端末変更時はこちら。
@@ -160,8 +160,14 @@
 
                     <div class="d-grid">
                         <button type="button" class="btn btn-outline-primary"
-                            onclick="showLoginMock()">
+                            onclick="location.href='/user/user_login.php'">
                             再ログイン画面へ
+                        </button>
+                    </div>
+                    <div class="text-secondary small mt-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="logout()">
+                            ログアウト
                         </button>
                     </div>
                 </div>
@@ -692,13 +698,37 @@
         }
 
         /**
-         * 再ログイン画面への導線（仮）
+         * ログアウトする
          */
-        function showLoginMock() {
-            alert(
-                '再ログイン画面への遷移先は未設定です。\n' +
-                'UserLoginPageのURLが決まったら接続してください。'
-            );
+        function logout() {
+            if (confirm('ログアウトしますか？')) {
+                fetch(getApiUrl('/user/logout.php'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        csrf_token: getCsrfToken()
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('ログアウトに失敗しました。');
+                    }
+                    return response.json();
+                }).then(data => {
+                    if (data.success) {
+                        alert('ログアウトしました。');
+                        location.href = '/user/user_mainpage.php';
+                    } else {
+                        throw new Error(data.message || 'ログアウトに失敗しました。');
+                    }
+                }).catch(error => {
+                    console.error('ログアウトエラー:', error);
+                    alert('ログアウトできませんでした。時間をおいて再度お試しください。');
+                });
+            }
         }
 
         /**
