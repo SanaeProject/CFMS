@@ -67,6 +67,7 @@
                 font-size: 1.6rem;
             }
         }
+
         //!SECTION
     </style>
 </head>
@@ -259,7 +260,7 @@
          * @param {Object} user ユーザー情報
          */
         function renderUser(user) {
-            userIdDiv.textContent = String(user.userId);
+            userIdDiv.textContent = String(user.token);
             updateBadge(
                 activeStatusSpan,
                 user.isActive ? '有効' : '未アクティブ',
@@ -274,17 +275,16 @@
                 isFinished ? 'danger' : 'success'
             );
 
-            finishedAtDiv.textContent = isFinished
-                ? String(user.finishedAt)
-                : '未終了';
+            finishedAtDiv.textContent = isFinished ?
+                String(user.finishedAt) :
+                '未終了';
 
             const score = Number(user.totalScore);
             totalScoreSpan.textContent =
                 Number.isFinite(score) ? score.toLocaleString('ja-JP') : '--';
 
-            // 未アクティブ・終了済みユーザーは終了処理の対象外とする。
-            finishButton.disabled =
-                !user.isActive || isFinished || isFinishing;
+            // 未アクティブ・終了済みユーザーは終了user.token処理の対象外とする。
+            finishButton.disabled = !user.isActive || isFinished || isFinishing;
         }
 
         /**
@@ -333,8 +333,7 @@
 
             try {
                 const response = await fetch(
-                    '<?= rtrim(getenv('API_URL') ?: '', '/') ?>/user/lookupByToken',
-                    {
+                    '<?= rtrim(getenv('API_URL') ?: '', '/') ?>/admin/lookup_by_token.php', {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -342,7 +341,7 @@
                         },
                         body: JSON.stringify({
                             token,
-                            csrfToken: document.querySelector('.csrf_token').value
+                            csrf_token: document.querySelector('.csrf_token').value
                         })
                     }
                 );
@@ -355,7 +354,7 @@
                 }
 
                 if (
-                    user.userId === undefined ||
+                    user.token === undefined ||
                     typeof user.isActive !== 'boolean' ||
                     user.totalScore === undefined
                 ) {
@@ -364,7 +363,7 @@
 
                 currentUser = {
                     token,
-                    userId: user.userId,
+                    userId: user.token,
                     isActive: user.isActive,
                     finishedAt: user.finishedAt ?? null,
                     totalScore: user.totalScore
@@ -398,7 +397,7 @@
             }
 
             const confirmed = window.confirm(
-                `ユーザーID: ${currentUser.userId}\n\n` +
+                `ユーザートークン: ${currentUser.token}\n\n` +
                 '景品を渡したことを確認しましたか？\n' +
                 'アカウントを終了すると、得点を付与できなくなります。'
             );
@@ -408,7 +407,7 @@
             }
 
             const targetToken = currentUser.token;
-            const targetUserId = currentUser.userId;
+            const targetUserId = currentUser.token;
             const csrfToken = document.querySelector('.csrf_token').value;
 
             isFinishing = true;
@@ -418,8 +417,7 @@
 
             try {
                 const response = await fetch(
-                    '<?= rtrim(getenv('API_URL') ?: '', '/') ?>/user/finish',
-                    {
+                    '<?= rtrim(getenv('API_URL') ?: '', '/') ?>/admin/user_finish.php', {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -427,7 +425,7 @@
                         },
                         body: JSON.stringify({
                             token: targetToken,
-                            csrfToken
+                            csrf_token: csrfToken
                         })
                     }
                 );
@@ -438,7 +436,7 @@
                 if (
                     !currentUser ||
                     currentUser.token !== targetToken ||
-                    String(currentUser.userId) !== String(targetUserId)
+                    String(currentUser.token) !== String(targetUserId)
                 ) {
                     showResult(
                         '終了処理の結果を確認できません。対象ユーザーを再検索してください。',
@@ -474,7 +472,7 @@
         //!SECTION
 
         //SECTION: フォームイベント
-        lookupForm.addEventListener('submit', async function (event) {
+        lookupForm.addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const token = tokenInput.value.trim();
@@ -524,8 +522,7 @@
                 ) || cameras[0];
 
                 await html5QrCode.start(
-                    camera.id,
-                    {
+                    camera.id, {
                         fps: 10,
                         qrbox: {
                             width: 250,
@@ -533,14 +530,14 @@
                         }
                     },
                     async decodedText => {
-                        // 読み取り成功後、カメラを停止してから検索する。
-                        tokenInput.value = decodedText.trim();
-                        await stopScanner();
-                        await lookupUser(tokenInput.value);
-                    },
-                    () => {
-                        // 読み取り途中の失敗は継続する。
-                    }
+                            // 読み取り成功後、カメラを停止してから検索する。
+                            tokenInput.value = decodedText.trim();
+                            await stopScanner();
+                            await lookupUser(tokenInput.value);
+                        },
+                        () => {
+                            // 読み取り途中の失敗は継続する。
+                        }
                 );
 
                 scannerRunning = true;
