@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -27,564 +26,692 @@
     <!-- CommentAnchor: Bootstrapの読み込み -->
     <link rel="stylesheet" href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+
+    <input type="hidden" class="csrf_token" value="">
 </head>
 
 <body class="bg-light">
 
-    <main>
-        <div class="container py-4">
+    <main class="container py-4">
 
-            <!-- CommentAnchor: ページタイトルと操作ボタン -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                <div>
-                    <p class="text-primary fw-bold mb-1">CFMS / ANALYSIS</p>
-                    <h1 class="h2 fw-bold mb-2">集計分析ページ</h1>
-                    <p class="text-secondary mb-0">
-                        ユーザー数や店舗別の利用状況を確認できます。
-                    </p>
-                </div>
+        <div class="card shadow-sm">
 
-                <div class="d-flex flex-wrap gap-2">
-                    <button type="button" id="refreshButton" class="btn btn-outline-primary">
-                        集計データを更新
-                    </button>
+            <div class="card-header bg-primary text-white">
+                <h1 class="h4 mb-1">
+                    利用状況集計
+                </h1>
 
-                    <a href="/staff/staff_main.php" class="btn btn-outline-secondary">
-                        管理メニューへ戻る
-                    </a>
-                </div>
+                <p class="mb-0 small">
+                    管理者専用｜システム利用状況の確認
+                </p>
             </div>
 
-            <!-- CommentAnchor: 通知メッセージ -->
-            <div id="statusMessage"
-                 class="alert d-none"
-                 role="status"
-                 aria-live="polite"></div>
+            <div class="card-body">
 
-            <!-- CommentAnchor: CSRFトークンの埋め込み先 -->
-            <input type="hidden" class="csrf_token" name="csrf_token" value="">
-
-            <!-- CommentAnchor: ユーザー集計 -->
-            <section class="mb-4" aria-labelledby="userStatisticsTitle">
-                <h2 id="userStatisticsTitle" class="h4 fw-bold mb-3">
-                    ユーザー集計
-                </h2>
-
-                <div class="row g-3">
-
-                    <div class="col-12 col-md-4">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <p class="text-secondary mb-2">総ユーザー数</p>
-                                <div class="d-flex align-items-baseline gap-2">
-                                    <span id="totalUsers" class="h2 fw-bold text-primary mb-0">データがありません</span>
-                                    <span class="text-secondary">人</span>
-                                </div>
-                                <p class="small text-secondary mb-0 mt-2">
-                                    登録されているユーザーの合計
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <p class="text-secondary mb-2">アクティベート済みユーザー数</p>
-                                <div class="d-flex align-items-baseline gap-2">
-                                    <span id="activeUsers" class="h2 fw-bold text-success mb-0">データがありません</span>
-                                    <span class="text-secondary">人</span>
-                                </div>
-                                <p class="small text-secondary mb-0 mt-2">
-                                    利用可能なユーザー
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <p class="text-secondary mb-2">終了済みユーザー数</p>
-                                <div class="d-flex align-items-baseline gap-2">
-                                    <span id="finishedUsers" class="h2 fw-bold text-secondary mb-0">データがありません</span>
-                                    <span class="text-secondary">人</span>
-                                </div>
-                                <p class="small text-secondary mb-0 mt-2">
-                                    利用終了処理済みのユーザー
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
+                <!-- 結果メッセージ -->
+                <div
+                    id="result"
+                    class="mb-3"
+                    role="status"
+                    aria-live="polite">
                 </div>
-            </section>
 
-            <!-- CommentAnchor: 3日間の利用者ランキング -->
-            <section class="card border-0 shadow-sm mb-4" aria-labelledby="recentUserRankingTitle">
-                <div class="card-body p-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-                        <div>
-                            <h2 id="recentUserRankingTitle" class="h4 fw-bold mb-1">
-                                3日間の利用者数ランキング
-                            </h2>
-                            <p class="text-secondary small mb-0">
-                                3日間に利用したユーザーを、利用回数の多い順に表示します。
-                            </p>
+                <!-- 再読込 -->
+                <div class="d-flex justify-content-end mb-4">
+                    <button
+                        type="button"
+                        id="reloadButton"
+                        class="btn btn-outline-primary">
+                        再読み込み
+                    </button>
+                </div>
+
+                <!-- 集計サマリー -->
+                <section class="mb-5">
+
+                    <h2 class="h5 mb-3">
+                        ユーザー集計
+                    </h2>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <div class="text-secondary small">
+                                        総ユーザー数
+                                    </div>
+
+                                    <div
+                                        id="totalUsers"
+                                        class="fs-2 fw-bold">
+                                        -
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <span class="badge text-bg-primary align-self-start">LAST 3 DAYS</span>
+
+                        <div class="col-md-4">
+                            <div class="card text-center h-100 border-success">
+                                <div class="card-body">
+                                    <div class="text-secondary small">
+                                        アクティブユーザー
+                                    </div>
+
+                                    <div
+                                        id="activeUsers"
+                                        class="fs-2 fw-bold text-success">
+                                        -
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card text-center h-100 border-danger">
+                                <div class="card-body">
+                                    <div class="text-secondary small">
+                                        終了済みユーザー
+                                    </div>
+
+                                    <div
+                                        id="finishedUsers"
+                                        class="fs-2 fw-bold text-danger">
+                                        -
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
+
+                </section>
+
+                <!-- 利用ランキング -->
+                <section class="mb-5">
+
+                    <h2 class="h5 mb-3">
+                        利用者ランキング
+                    </h2>
 
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+
+                        <table class="table table-striped table-bordered align-middle">
+
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col">順位</th>
-                                    <th scope="col">利用者名</th>
-                                    <th scope="col" class="text-end">利用回数</th>
+                                    <th>順位</th>
+                                    <th>ユーザーID</th>
+                                    <th>利用回数</th>
                                 </tr>
                             </thead>
-                            <tbody id="recentUserRankingBody">
+
+                            <tbody id="recentUserRanking">
                                 <tr>
-                                    <td colspan="3" class="text-center text-secondary py-4">
-                                        データがありません
+                                    <td colspan="3" class="text-center text-secondary">
+                                        読み込み中...
                                     </td>
                                 </tr>
                             </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
 
-            <!-- CommentAnchor: 店舗別利用者数ランキング -->
-            <section class="card border-0 shadow-sm mb-4" aria-labelledby="storeUserRankingTitle">
-                <div class="card-body p-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-                        <div>
-                            <h2 id="storeUserRankingTitle" class="h4 fw-bold mb-1">
-                                店舗別利用者数ランキング
-                            </h2>
-                            <p class="text-secondary small mb-0">
-                                店舗を利用したユーザー数が多い順に表示します。
-                            </p>
-                        </div>
-                        <span class="badge text-bg-success align-self-start">STORE USERS</span>
+                        </table>
+
                     </div>
+
+                </section>
+
+                <!-- 店舗別利用者数ランキング -->
+                <section>
+
+                    <h2 class="h5 mb-3">
+                        店舗別利用者数ランキング
+                    </h2>
 
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+
+                        <table class="table table-striped table-bordered align-middle">
+
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col">順位</th>
-                                    <th scope="col">店舗名</th>
-                                    <th scope="col" class="text-end">利用者数</th>
+                                    <th>順位</th>
+                                    <th>店舗ID</th>
+                                    <th>店舗名</th>
+                                    <th>利用者数</th>
                                 </tr>
                             </thead>
-                            <tbody id="storeUserRankingBody">
+
+                            <tbody id="storeUserRanking">
                                 <tr>
-                                    <td colspan="3" class="text-center text-secondary py-4">
-                                        データがありません
+                                    <td colspan="4" class="text-center text-secondary">
+                                        読み込み中...
                                     </td>
                                 </tr>
                             </tbody>
+
                         </table>
+
                     </div>
-                </div>
-            </section>
 
-            <!-- CommentAnchor: CSV出力 -->
-            <section class="card border-0 shadow-sm mb-4" aria-labelledby="csvExportTitle">
-                <div class="card-body p-4">
-                    <h2 id="csvExportTitle" class="h4 fw-bold mb-2">CSV出力</h2>
-                    <p class="text-secondary">
-                        集計データをCSVファイルとしてダウンロードできます。
-                    </p>
+                </section>
 
-                    <form id="exportForm">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-md-8">
-                                <label for="exportType" class="form-label">出力するデータ</label>
-                                <select id="exportType" name="type" class="form-select" required>
-                                    <option value="user_history">ユーザー履歴</option>
-                                    <option value="store_statistics">店舗別集計</option>
-                                    <option value="redemption_history">景品交換履歴</option>
-                                </select>
-                            </div>
+            </div>
 
-                            <div class="col-12 col-md-4">
-                                <button type="submit" id="exportButton" class="btn btn-success w-100">
-                                    CSVをダウンロード
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </section>
-
-            <!-- CommentAnchor: 最終取得日時 -->
-            <p class="small text-secondary text-end mb-0">
-                最終取得日時：
-                <span id="lastUpdated">未取得</span>
-            </p>
+            <div class="card-footer text-secondary small">
+                StatisticsPage
+            </div>
 
         </div>
+
     </main>
 
     <script>
-        // CommentAnchor: APIの接続先
-        const STATISTICS_API_URL = '/api/admin/statistics';
-        const EXPORT_API_URL = '/api/admin/export';
+        'use strict';
 
-        // CommentAnchor: HTML要素を取得
-        const statusMessage = document.getElementById('statusMessage');
-        const refreshButton = document.getElementById('refreshButton');
-        const exportForm = document.getElementById('exportForm');
-        const exportButton = document.getElementById('exportButton');
+        // =====================================
+        // DOM
+        // =====================================
 
-        // CommentAnchor: 通知メッセージを表示
-        function showStatus(message, type) {
-            if (!statusMessage) {
-                console.error('HTMLに statusMessage がありません。');
-                return;
-            }
+        const resultDiv =
+            document.getElementById(
+                'result'
+            );
 
-            statusMessage.className = `alert alert-${type}`;
-            statusMessage.textContent = message;
+        const reloadButton =
+            document.getElementById(
+                'reloadButton'
+            );
+
+        const totalUsersElement =
+            document.getElementById(
+                'totalUsers'
+            );
+
+        const activeUsersElement =
+            document.getElementById(
+                'activeUsers'
+            );
+
+        const finishedUsersElement =
+            document.getElementById(
+                'finishedUsers'
+            );
+
+        const recentUserRankingBody =
+            document.getElementById(
+                'recentUserRanking'
+            );
+
+        const storeUserRankingBody =
+            document.getElementById(
+                'storeUserRanking'
+            );
+
+        // =====================================
+        // API
+        // =====================================
+
+        const API_BASE_URL =
+            '<?= getenv('API_URL') ?>';
+
+        const STATISTICS_API =
+            `${API_BASE_URL}/admin/statistics.php`;
+
+        // =====================================
+        // 状態管理
+        // =====================================
+
+        let loading = false;
+
+        // =====================================
+        // メッセージ表示
+        // =====================================
+
+        function showResult(
+            message,
+            type = 'info'
+        ) {
+
+            resultDiv.replaceChildren();
+
+            const alert =
+                document.createElement(
+                    'div'
+                );
+
+            alert.className =
+                `alert alert-${type}`;
+
+            alert.textContent =
+                message;
+
+            resultDiv.appendChild(
+                alert
+            );
         }
 
-        // CommentAnchor: 通知メッセージを非表示
-        function hideStatus() {
-            if (!statusMessage) {
-                console.error('HTMLに statusMessage がありません。');
-                return;
-            }
+        function clearResult() {
 
-            statusMessage.className = 'alert d-none';
-            statusMessage.textContent = '';
+            resultDiv.replaceChildren();
         }
 
-        // CommentAnchor: 数値を表示
-        function displayCount(elementId, value) {
-            const element = document.getElementById(elementId);
+        // =====================================
+        // CSRF
+        // =====================================
 
-            if (!element) {
-                console.error(`HTMLに ${elementId} がありません。`);
-                return;
-            }
+        function getCsrfToken() {
 
-            if (value === null || value === undefined || value === '') {
-                element.textContent = 'データがありません';
-                return;
-            }
+            const csrfInput =
+                document.querySelector(
+                    '.csrf_token'
+                );
 
-            const count = Number(value);
-
-            if (!Number.isFinite(count)) {
-                element.textContent = 'データがありません';
-                return;
-            }
-
-            element.textContent = count.toLocaleString('ja-JP');
+            return csrfInput ?
+                csrfInput.value :
+                '';
         }
 
-        // CommentAnchor: ランキング表を表示
-        function renderRanking(tbodyId, ranking, nameKey, valueKey, valueLabel) {
-            const tbody = document.getElementById(tbodyId);
+        async function waitForCsrfToken(
+            timeoutMs = 10000
+        ) {
 
-            if (!tbody) {
-                console.error(`HTMLに ${tbodyId} がありません。`);
-                return;
-            }
+            const start =
+                Date.now();
 
-            tbody.replaceChildren();
+            while (
+                Date.now() - start <
+                timeoutMs
+            ) {
 
-            if (!Array.isArray(ranking) || ranking.length === 0) {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
+                const token =
+                    getCsrfToken();
 
-                cell.colSpan = 3;
-                cell.className = 'text-center text-secondary py-4';
-                cell.textContent = 'データがありません';
-
-                row.appendChild(cell);
-                tbody.appendChild(row);
-                return;
-            }
-
-            ranking.forEach((item, index) => {
-                const row = document.createElement('tr');
-
-                const rankCell = document.createElement('th');
-                rankCell.scope = 'row';
-                rankCell.textContent = `${index + 1}位`;
-
-                const nameCell = document.createElement('td');
-                const name = item[nameKey];
-
-                nameCell.textContent =
-                    name === null || name === undefined || name === ''
-                        ? 'データがありません'
-                        : String(name);
-
-                const valueCell = document.createElement('td');
-                valueCell.className = 'text-end fw-bold';
-
-                const value = item[valueKey];
-                const numericValue = Number(value);
-
-                if (
-                    value === null ||
-                    value === undefined ||
-                    value === '' ||
-                    !Number.isFinite(numericValue)
-                ) {
-                    valueCell.textContent = 'データがありません';
-                } else {
-                    valueCell.textContent =
-                        `${numericValue.toLocaleString('ja-JP')}${valueLabel}`;
+                if (token) {
+                    return token;
                 }
 
-                row.append(rankCell, nameCell, valueCell);
-                tbody.appendChild(row);
-            });
-        }
-
-        // CommentAnchor: CSRFトークンを取得（埋め込み前でもfetchTokenで取得して待つ）
-                let csrfTokenPromise = null;
-
-        // CommentAnchor: CSRFトークンを取得（重複リクエストを防止）
-        function getCsrfToken() {
-            const input = document.querySelector('.csrf_token');
-
-            if (input && input.value) {
-                return Promise.resolve(input.value);
+                await new Promise(
+                    resolve =>
+                    setTimeout(
+                        resolve,
+                        100
+                    )
+                );
             }
 
-            if (!csrfTokenPromise) {
-                csrfTokenPromise = fetchToken('<?= getenv('API_URL') ?>').then(token => {
-                    if (input) {
-                        input.value = token;
-                    }
-                    return token;
+            throw new Error(
+                'CSRFトークンを取得できませんでした。'
+            );
+        }
+
+        // =====================================
+        // API通信
+        // =====================================
+
+        async function callApi(
+            url,
+            requestData = {}
+        ) {
+
+            await waitForCsrfToken();
+
+            const response =
+                await fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...requestData,
+                        csrf_token: getCsrfToken()
+                    })
                 });
-            }
 
-            return csrfTokenPromise;
-        }
-
-        // CommentAnchor: JSON形式のAPIレスポンスを取得
-        async function fetchJson(url) {
-            const csrfToken = await getCsrfToken();
-
-            const response = await fetch(url, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    csrf_token: csrfToken
-                })
-            });
-
-            const responseText = await response.text();
             let data;
 
             try {
-                data = JSON.parse(responseText);
-            } catch (error) {
-                console.error('JSON以外のレスポンス:', responseText);
-                throw new Error('APIからJSONデータを受信できませんでした。');
+
+                data =
+                    await response.json();
+
+            } catch {
+
+                throw new Error(
+                    'サーバーから正しいJSONが返却されませんでした。'
+                );
             }
 
-            if (!response.ok || data.success !== true) {
-                throw new Error(data.message || 'データを取得できませんでした。');
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    '通信に失敗しました。'
+                );
+            }
+
+            if (
+                data.success !== true
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    '処理に失敗しました。'
+                );
             }
 
             return data;
         }
 
-        // CommentAnchor: 集計データを取得
+        // =====================================
+        // 集計取得
+        // =====================================
+
         async function loadStatistics() {
-            hideStatus();
 
-            if (refreshButton) {
-                refreshButton.disabled = true;
-                refreshButton.textContent = '読み込み中...';
+            if (loading) {
+                return;
             }
 
-            // CommentAnchor: 取得開始時はデータなしで初期化
-            displayCount('totalUsers', null);
-            displayCount('activeUsers', null);
-            displayCount('finishedUsers', null);
+            loading = true;
 
-            renderRanking('recentUserRankingBody', [], 'userName', 'useCount', '回');
-            renderRanking('storeUserRankingBody', [], 'storeName', 'userCount', '人');
-
-            const lastUpdated = document.getElementById('lastUpdated');
-
-            if (lastUpdated) {
-                lastUpdated.textContent = '未取得';
-            }
+            reloadButton.disabled =
+                true;
 
             try {
-                const data = await fetchJson(STATISTICS_API_URL);
 
-                displayCount('totalUsers', data.totalUsers);
-                displayCount('activeUsers', data.activeUsers);
-                displayCount('finishedUsers', data.finishedUsers);
+                const data =
+                    await callApi(
+                        STATISTICS_API
+                    );
 
-                // CommentAnchor: 直近3日間の利用者ランキング
-                const recentUserRanking = Array.isArray(data.recentUserRanking)
-                    ? [...data.recentUserRanking]
-                    : [];
+                totalUsersElement.textContent =
+                    Number(
+                        data.totalUsers ?? 0
+                    ).toLocaleString(
+                        'ja-JP'
+                    );
 
-                recentUserRanking.sort(
-                    (a, b) => Number(b.useCount ?? 0) - Number(a.useCount ?? 0)
+                activeUsersElement.textContent =
+                    Number(
+                        data.activeUsers ?? 0
+                    ).toLocaleString(
+                        'ja-JP'
+                    );
+
+                finishedUsersElement.textContent =
+                    Number(
+                        data.finishedUsers ?? 0
+                    ).toLocaleString(
+                        'ja-JP'
+                    );
+
+                renderRecentUserRanking(
+                    data.recentUserRanking || []
                 );
 
-                renderRanking(
-                    'recentUserRankingBody',
-                    recentUserRanking,
-                    'userName',
-                    'useCount',
-                    '回'
+                renderStoreUserRanking(
+                    data.storeUserRanking || []
                 );
 
-                // CommentAnchor: 店舗別利用者数ランキング
-                const storeUserRanking = Array.isArray(data.storeUserRanking)
-                    ? [...data.storeUserRanking]
-                    : [];
-
-                storeUserRanking.sort(
-                    (a, b) => Number(b.userCount ?? 0) - Number(a.userCount ?? 0)
-                );
-
-                renderRanking(
-                    'storeUserRankingBody',
-                    storeUserRanking,
-                    'storeName',
-                    'userCount',
-                    '人'
-                );
-
-                if (lastUpdated) {
-                    lastUpdated.textContent = new Date().toLocaleString('ja-JP');
-                }
-
-                showStatus('集計データを取得しました。', 'success');
+                clearResult();
 
             } catch (error) {
-                console.error('集計データ取得エラー:', error);
 
-                displayCount('totalUsers', null);
-                displayCount('activeUsers', null);
-                displayCount('finishedUsers', null);
-
-                renderRanking('recentUserRankingBody', [], 'userName', 'useCount', '回');
-                renderRanking('storeUserRankingBody', [], 'storeName', 'userCount', '人');
-
-                if (lastUpdated) {
-                    lastUpdated.textContent = '未取得';
-                }
-
-                showStatus('データがありません', 'warning');
+                showResult(
+                    error.message ||
+                    '集計取得に失敗しました。',
+                    'danger'
+                );
 
             } finally {
-                if (refreshButton) {
-                    refreshButton.disabled = false;
-                    refreshButton.textContent = '集計データを更新';
+
+                loading = false;
+
+                reloadButton.disabled =
+                    false;
+            }
+        }
+        // =====================================
+        // 利用者ランキング描画
+        // =====================================
+
+        function renderRecentUserRanking(
+            ranking
+        ) {
+
+            recentUserRankingBody.replaceChildren();
+
+            if (
+                !Array.isArray(ranking) ||
+                ranking.length === 0
+            ) {
+
+                const row =
+                    document.createElement(
+                        'tr'
+                    );
+
+                const cell =
+                    document.createElement(
+                        'td'
+                    );
+
+                cell.colSpan = 3;
+
+                cell.className =
+                    'text-center text-secondary';
+
+                cell.textContent =
+                    'データがありません';
+
+                row.appendChild(cell);
+
+                recentUserRankingBody.appendChild(
+                    row
+                );
+
+                return;
+            }
+
+            ranking.forEach(
+                (
+                    user,
+                    index
+                ) => {
+
+                    const row =
+                        document.createElement(
+                            'tr'
+                        );
+
+                    const rankCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    rankCell.textContent =
+                        index + 1;
+
+                    const userCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    userCell.textContent =
+                        user.userId ?? '-';
+
+                    const countCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    countCell.textContent =
+                        Number(
+                            user.useCount ?? 0
+                        ).toLocaleString(
+                            'ja-JP'
+                        );
+
+                    row.append(
+                        rankCell,
+                        userCell,
+                        countCell
+                    );
+
+                    recentUserRankingBody.appendChild(
+                        row
+                    );
                 }
+            );
+        }
+
+        // =====================================
+        // 店舗別ランキング描画
+        // =====================================
+
+        function renderStoreUserRanking(
+            ranking
+        ) {
+
+            storeUserRankingBody.replaceChildren();
+
+            if (
+                !Array.isArray(ranking) ||
+                ranking.length === 0
+            ) {
+
+                const row =
+                    document.createElement(
+                        'tr'
+                    );
+
+                const cell =
+                    document.createElement(
+                        'td'
+                    );
+
+                cell.colSpan = 4;
+
+                cell.className =
+                    'text-center text-secondary';
+
+                cell.textContent =
+                    'データがありません';
+
+                row.appendChild(cell);
+
+                storeUserRankingBody.appendChild(
+                    row
+                );
+
+                return;
+            }
+
+            ranking.forEach(
+                (
+                    store,
+                    index
+                ) => {
+
+                    const row =
+                        document.createElement(
+                            'tr'
+                        );
+
+                    const rankCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    rankCell.textContent =
+                        index + 1;
+
+                    const storeIdCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    storeIdCell.textContent =
+                        store.storeId ?? '-';
+
+                    const storeNameCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    storeNameCell.textContent =
+                        store.storeName ?? '-';
+
+                    const userCountCell =
+                        document.createElement(
+                            'td'
+                        );
+
+                    userCountCell.textContent =
+                        Number(
+                            store.userCount ?? 0
+                        ).toLocaleString(
+                            'ja-JP'
+                        );
+
+                    row.append(
+                        rankCell,
+                        storeIdCell,
+                        storeNameCell,
+                        userCountCell
+                    );
+
+                    storeUserRankingBody.appendChild(
+                        row
+                    );
+                }
+            );
+        }
+
+        // =====================================
+        // 再読み込み
+        // =====================================
+
+        reloadButton.addEventListener(
+            'click',
+            async function() {
+
+                await loadStatistics();
+            }
+        );
+
+        // =====================================
+        // 初期化
+        // =====================================
+
+        async function initialize() {
+
+            try {
+
+                showResult(
+                    '集計データを取得しています...',
+                    'info'
+                );
+
+                await waitForCsrfToken();
+
+                await loadStatistics();
+
+            } catch (error) {
+
+                showResult(
+                    error.message ||
+                    '初期化に失敗しました。',
+                    'danger'
+                );
             }
         }
 
-        // CommentAnchor: 集計データ更新ボタン
-        if (refreshButton) {
-            refreshButton.addEventListener('click', loadStatistics);
-        }
+        // =====================================
+        // 開始
+        // =====================================
 
-        // CommentAnchor: CSVファイルのダウンロード
-        if (exportForm) {
-            exportForm.addEventListener('submit', async function (event) {
-                event.preventDefault();
-                hideStatus();
-
-                if (exportButton) {
-                    exportButton.disabled = true;
-                    exportButton.textContent = '出力中...';
-                }
-
-                let downloadUrl = null;
-
-                try {
-                    const exportType = document.getElementById('exportType').value;
-                    const csrfToken = await getCsrfToken();
-
-                    const response = await fetch(EXPORT_API_URL, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'text/csv'
-                        },
-                        body: JSON.stringify({
-                            type: exportType,
-                            csrf_token: csrfToken
-                        })
-                    });
-
-                    if (!response.ok) {
-                        let message = 'データがありません';
-
-                        try {
-                            const errorData = await response.json();
-                            message = errorData.message || message;
-                        } catch (error) {
-                            // CommentAnchor: JSONでないエラー応答は既定のメッセージを使う
-                        }
-
-                        throw new Error(message);
-                    }
-
-                    const blob = await response.blob();
-
-                    if (blob.size === 0) {
-                        throw new Error('データがありません');
-                    }
-
-                    downloadUrl = URL.createObjectURL(blob);
-
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download =
-                        `${exportType}_${new Date().toISOString().slice(0, 10)}.csv`;
-
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-
-                    showStatus('CSVファイルをダウンロードしました。', 'success');
-
-                } catch (error) {
-                    console.error('CSV出力エラー:', error);
-                    showStatus('データがありません', 'warning');
-
-                } finally {
-                    if (downloadUrl !== null) {
-                        URL.revokeObjectURL(downloadUrl);
-                    }
-
-                    if (exportButton) {
-                        exportButton.disabled = false;
-                        exportButton.textContent = 'CSVをダウンロード';
-                    }
-                }
-            });
-        }
-
-        // CommentAnchor: ページ読み込み時に集計データを取得
-        document.addEventListener('DOMContentLoaded', loadStatistics);
+        initialize();
     </script>
 
     <!-- CommentAnchor: 共通フッター -->
@@ -594,4 +721,5 @@
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/components/fetch_csrf_token.php'; ?>
 
 </body>
+
 </html>
