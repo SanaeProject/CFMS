@@ -72,13 +72,14 @@
                             <input
                                 type="hidden"
                                 id="csrfToken"
+                                class="csrf_token"
                                 name="csrf_token"
                                 value="">
 
                             <!-- ユーザーID：文字列として扱う -->
                             <div class="mb-3">
                                 <label for="userId" class="form-label">
-                                    ユーザーID
+                                    トークン
                                     <span class="text-danger">*</span>
                                 </label>
 
@@ -86,14 +87,15 @@
                                     type="text"
                                     class="form-control"
                                     id="userId"
-                                    name="userId"
-                                    placeholder="ユーザーIDを入力"
+                                    name="token"
+                                    placeholder="10文字のトークンを入力"
                                     autocomplete="username"
-                                    maxlength="100"
+                                    minlength="10"
+                                    maxlength="10"
                                     required>
 
                                 <div class="invalid-feedback">
-                                    ユーザーIDを入力してください。
+                                    ユーザートークンを入力してください。
                                 </div>
                             </div>
 
@@ -143,10 +145,6 @@
 
     <!-- JavaScript：ログイン処理 -->
     <script>
-        // =====================================
-        // DOM要素の取得
-        // =====================================
-
         const loginForm = document.getElementById("loginForm");
         const userIdInput = document.getElementById("userId");
         const passcodeInput = document.getElementById("passcode");
@@ -154,22 +152,18 @@
         const statusArea = document.getElementById("statusArea");
         const loginButton = document.getElementById("loginButton");
 
-        // =====================================
-        // モック用の定数
-        // 実際の認証情報はサーバー側で管理する
-        // =====================================
+        const API_BASE_URL =
+            '<?= getenv('API_URL') ?>';
 
-        const MOCK_USER = {
-            userId: "user001",
-            passcode: "demo1234",
-            passcodeIssued: true,
-            accountEnded: false
-        };
+        const LOGIN_API =
+            `${API_BASE_URL}/user/login.php`;
 
-        // =====================================
-        // メッセージ表示関数
-        // =====================================
+        const IS_LOGGED_IN_API =
+            `${API_BASE_URL}/user/is_logged_in.php`;
 
+        function getCsrfToken() {
+            return csrfTokenInput.value;
+        }
         /**
          * 処理結果やエラーメッセージを表示する
          * @param {string} message 表示するメッセージ
@@ -184,223 +178,186 @@
 
             statusArea.appendChild(alertElement);
         }
-
         /**
          * メッセージを消去する
          */
         function clearMessage() {
             statusArea.replaceChildren();
         }
+        async function waitForCsrfToken(
+            timeoutMs = 10000
+        ) {
 
-        // =====================================
-        // ログインAPIのモック
-        // API仕様：POST /api/user/login
-        // =====================================
+            const start = Date.now();
 
-        /**
-         * ログイン処理を模擬する
-         * @param {Object} payload 送信するログイン情報
-         * @returns {Promise<Object>} ログイン結果
-         */
-        async function mockLoginApi(payload) {
-            // 通信時間を模擬する
-            await new Promise(resolve => setTimeout(resolve, 300));
+            while (
+                Date.now() - start < timeoutMs
+            ) {
 
-            // CSRFトークンの存在を確認する
-            // 本物のCSRF検証はサーバー側で行う
-            if (!payload.csrfToken) {
-                return {
-                    success: false,
-                    message: "CSRFトークンを取得できません。"
-                };
-            }
+                const token =
+                    getCsrfToken();
 
-            // ユーザーIDを文字列として比較する
-            if (payload.userId !== MOCK_USER.userId) {
-                return {
-                    success: false,
-                    message: "ユーザーIDまたはパスコードが正しくありません。"
-                };
-            }
+                if (token) {
+                    return token;
+                }
 
-            // パスコードの発行状態を確認する
-            if (!MOCK_USER.passcodeIssued) {
-                return {
-                    success: false,
-                    message: "パスコードが発行されていません。"
-                };
-            }
-
-            // アカウントの終了状態を確認する
-            if (MOCK_USER.accountEnded) {
-                return {
-                    success: false,
-                    message: "このアカウントは終了しています。"
-                };
-            }
-
-            // パスコードを確認する
-            if (payload.passcode !== MOCK_USER.passcode) {
-                return {
-                    success: false,
-                    message: "ユーザーIDまたはパスコードが正しくありません。"
-                };
-            }
-
-            // 認証成功
-            return {
-                success: true,
-                message: "ログインに成功しました。"
-            };
-        }
-
-        // =====================================
-        // フォーム送信処理
-        // デフォルト送信を禁止して非同期で実行する
-        // =====================================
-
-        loginForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
-            clearMessage();
-
-            // 入力値を取得する
-            const userId = userIdInput.value.trim();
-            const passcode = passcodeInput.value;
-            const csrfToken = csrfTokenInput.value;
-
-            // 必須入力チェック
-            userIdInput.classList.toggle("is-invalid", !userId);
-            passcodeInput.classList.toggle("is-invalid", !passcode);
-
-            if (!userId || !passcode) {
-                showMessage(
-                    "ユーザーIDとパスコードを入力してください。"
+                await new Promise(
+                    resolve =>
+                    setTimeout(resolve, 100)
                 );
-                return;
             }
 
-            // 二重送信を防止する
-            loginButton.disabled = true;
-            loginButton.textContent = "認証中...";
+            throw new Error(
+                'CSRFトークンの取得に失敗しました。'
+            );
+        }
+        async function callApi(
+            url,
+            requestData = {}
+        ) {
 
-            try {
-                // モックAPIにログイン情報を渡す
-                const result = await mockLoginApi({
-                    userId: userId,
-                    passcode: passcode,
-                    csrfToken: csrfToken
+            await waitForCsrfToken();
+
+            const response =
+                await fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...requestData,
+                        csrf_token: getCsrfToken()
+                    })
                 });
 
-                if (result.success) {
-                    // モック用のログイン状態を保存する
-                    sessionStorage.setItem(
-                        "cfmsMockUser",
-                        JSON.stringify({
-                            userId: userId,
-                            isLoggedIn: true
-                        })
-                    );
+            const data =
+                await response.json();
 
-                    showMessage(
-                        "ログインに成功しました。ユーザーメインページへ進みます。",
-                        "success"
-                    );
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    '通信に失敗しました。'
+                );
+            }
 
-                    // 実際の画面を作成したら遷移先を設定する
-                    // window.location.href = "/user/home";
+            return data;
+        }
+        loginForm.addEventListener(
+            "submit",
+            async function(event) {
 
-                } else {
-                    showMessage(result.message);
-                }
+                event.preventDefault();
 
-            } catch (error) {
-                // エラー情報は開発者向けに記録する
-                console.error("Login error:", error);
+                clearMessage();
 
-                showMessage(
-                    "処理に失敗しました。もう一度お試しください。"
+                const token =
+                    userIdInput.value.trim();
+
+                const passcode =
+                    passcodeInput.value;
+
+                userIdInput.classList.toggle(
+                    "is-invalid",
+                    token.length !== 10
                 );
 
-            } finally {
-                // ボタンを元の状態に戻す
-                loginButton.disabled = false;
-                loginButton.textContent = "ログイン";
-            }
-        });
+                passcodeInput.classList.toggle(
+                    "is-invalid",
+                    !passcode
+                );
 
-        // =====================================
-        // ログイン状態確認APIのモック
-        // API仕様：POST /api/user/isLoggedIn
-        // =====================================
+                if (
+                    token.length !== 10 ||
+                    !passcode
+                ) {
 
-        /**
-         * ログイン状態を確認する
-         * @returns {Promise<Object>} ログイン状態
-         */
-        async function mockIsLoggedInApi() {
-            const storedUser = sessionStorage.getItem("cfmsMockUser");
-
-            if (!storedUser) {
-                return {
-                    success: true,
-                    isLoggedIn: false
-                };
-            }
-
-            try {
-                const user = JSON.parse(storedUser);
-
-                return {
-                    success: true,
-                    isLoggedIn: user.isLoggedIn === true
-                };
-
-            } catch (error) {
-                // 保存データが不正な場合は削除する
-                sessionStorage.removeItem("cfmsMockUser");
-
-                return {
-                    success: true,
-                    isLoggedIn: false
-                };
-            }
-        }
-
-        // =====================================
-        // 画面読み込み時のログイン状態確認
-        // =====================================
-
-        document.addEventListener("DOMContentLoaded", async function() {
-            try {
-                const result = await mockIsLoggedInApi();
-
-                if (result.isLoggedIn) {
                     showMessage(
-                        "ログイン済みです。ユーザーメインページへ進めます。",
-                        "info"
+                        "トークンとパスコードを入力してください。"
                     );
+
+                    return;
                 }
 
-            } catch (error) {
-                console.error("Session check error:", error);
-            }
-        });
+                loginButton.disabled = true;
+                loginButton.textContent = "認証中...";
 
-        // =====================================
-        // 入力時に必須エラーを解除する
-        // =====================================
+                try {
 
-        userIdInput.addEventListener("input", function() {
-            if (this.value.trim()) {
-                this.classList.remove("is-invalid");
-            }
-        });
+                    const result =
+                        await callApi(
+                            LOGIN_API, {
+                                token,
+                                passcode
+                            }
+                        );
 
-        passcodeInput.addEventListener("input", function() {
-            if (this.value) {
-                this.classList.remove("is-invalid");
+                    if (result.success) {
+
+                        showMessage(
+                            "ログインに成功しました。",
+                            "success"
+                        );
+                        window.location.href =
+                            "/user/user_mainpage.php";
+                    } else {
+
+                        showMessage(
+                            result.message ||
+                            "ログインに失敗しました。"
+                        );
+                    }
+
+                } catch (error) {
+
+                    showMessage(
+                        error.message ||
+                        "処理に失敗しました。"
+                    );
+
+                } finally {
+
+                    loginButton.disabled = false;
+                    loginButton.textContent = "ログイン";
+                }
             }
-        });
+        );
+        document.addEventListener(
+            "DOMContentLoaded",
+            async function() {
+
+                try {
+
+                    await waitForCsrfToken();
+
+                    const result =
+                        await callApi(
+                            IS_LOGGED_IN_API
+                        );
+
+                    if (
+                        result.isLoggedIn === true
+                    ) {
+
+                        showMessage(
+                            "ログイン済みです。",
+                            "info"
+                        );
+
+                        /*
+                        window.location.href =
+                            "/user/index.php";
+                        */
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+                }
+            }
+        );
     </script>
 
     <!-- フッター読み込み -->
