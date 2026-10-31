@@ -2,7 +2,7 @@
 
 /**
  * 管理者向けの集計データを返します。
- * 管理者(Staff.role = admin)のみ実行できます。
+ * 管理者(staff.role = admin)のみ実行できます。
  * 入力: {
  *      csrf_token: "CSRFトークン"
  * }
@@ -10,11 +10,11 @@
  *      success: true/false,
  *      message: "処理結果のメッセージ",
  *      data: [],
- *      totalUsers: 総ユーザー数,
- *      activeUsers: アクティベート済みユーザー数(is_active = 1),
- *      finishedUsers: 終了済みユーザー数(finished_atが設定済み),
- *      recentUserRanking: [ // 今日を含む暦日3日分の利用者ランキング(利用回数の多い順)
- *          {userId: ユーザーID, userName: "利用者名", useCount: 利用回数},
+ *      totalusers: 総ユーザー数,
+ *      activeusers: アクティベート済みユーザー数(is_active = 1),
+ *      finishedusers: 終了済みユーザー数(finished_atが設定済み),
+ *      recentUserRanking: [ // 今日を含む利用者ランキング(利用回数の多い順)
+ *          {userId: ユーザーID, useCount: 利用回数},
  *          ...
  *      ],
  *      storeUserRanking: [ // 店舗別利用者数ランキング(同一ユーザーは1人として換算。利用者0人の店舗は含めない)
@@ -85,7 +85,7 @@ if (!$sessionCsrfToken->validateToken($csrfToken)) {
 
 //SECTION: 処理の実行
 try {
-    //ANCHOR - 管理者権限の確認（セッションのstaff_idからStaff.roleを検索）
+    //ANCHOR - 管理者権限の確認（セッションのstaff_idからstaff.roleを検索）
     $session = new Lib\Session();
     $staffId = $session->get('staff_id');
     if ($staffId === null) {
@@ -99,7 +99,7 @@ try {
     }
 
     $db = Lib\DB::connect();
-    $stmt = $db->exec("SELECT role FROM Staff WHERE id = :id", [':id' => $staffId]);
+    $stmt = $db->exec("SELECT role FROM staff WHERE id = :id", [':id' => $staffId]);
     $staff = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($staff === false || $staff['role'] !== 'admin') {
         http_response_code(403);
@@ -117,23 +117,21 @@ try {
             COUNT(*) AS total_users,
             COALESCE(SUM(is_active = 1), 0) AS active_users,
             COALESCE(SUM(finished_at IS NOT NULL), 0) AS finished_users
-         FROM Users"
+         FROM users"
     );
     $userCounts = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    //ANCHOR - 今日を含む暦日3日分の利用者ランキング（同姓同名もuser_idで区別する）
+    //ANCHOR - 今日を含む利用者ランキング（同姓同名もuser_idで区別する）
     $stmt = $db->exec(
-        "SELECT u.id AS user_id, u.name AS user_name, COUNT(sc.id) AS use_count
-         FROM Scores sc
-         INNER JOIN Users u ON u.id = sc.user_id
-         WHERE sc.created_at >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
-         GROUP BY u.id, u.name
+        "SELECT u.id AS user_id, COUNT(sc.id) AS use_count
+         FROM scores sc
+         INNER JOIN users u ON u.id = sc.user_id
+         GROUP BY u.id
          ORDER BY use_count DESC, u.id ASC"
     );
     $recentUserRanking = array_map(function ($row) {
         return [
             "userId" => (int)$row['user_id'],
-            "userName" => $row['user_name'],
             "useCount" => (int)$row['use_count']
         ];
     }, $stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -141,8 +139,8 @@ try {
     //ANCHOR - 店舗別利用者数ランキング（同一ユーザーは1人として換算。利用者0人の店舗は除外）
     $stmt = $db->exec(
         "SELECT st.id AS store_id, st.name AS store_name, COUNT(DISTINCT sc.user_id) AS user_count
-         FROM Stores st
-         INNER JOIN Scores sc ON sc.store_id = st.id
+         FROM stores st
+         INNER JOIN scores sc ON sc.store_id = st.id
          GROUP BY st.id, st.name
          ORDER BY user_count DESC, st.id ASC"
     );
