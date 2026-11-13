@@ -161,6 +161,29 @@
         const IS_LOGGED_IN_API =
             `${API_BASE_URL}/user/is_logged_in.php`;
 
+        /**
+         * QRコード経由で渡された認証情報(URLの #token=...&passcode=...)を取得する。
+         * 取得後は履歴やアドレスバーに残らないよう、URLからすぐに消す。
+         */
+        const qrCredentials = (function() {
+            const params = new URLSearchParams(location.hash.slice(1));
+            const token = params.get("token");
+            const passcode = params.get("passcode");
+
+            if (location.hash) {
+                history.replaceState(
+                    null,
+                    "",
+                    location.pathname + location.search
+                );
+            }
+
+            return token && passcode ? {
+                token,
+                passcode
+            } : null;
+        })();
+
         function getCsrfToken() {
             return csrfTokenInput.value;
         }
@@ -326,6 +349,12 @@
             "DOMContentLoaded",
             async function() {
 
+                // QRコードの情報があれば入力欄に反映する
+                if (qrCredentials) {
+                    userIdInput.value = qrCredentials.token;
+                    passcodeInput.value = qrCredentials.passcode;
+                }
+
                 try {
 
                     await waitForCsrfToken();
@@ -348,6 +377,15 @@
                         window.location.href =
                             "/user/index.php";
                         */
+                    } else if (qrCredentials) {
+
+                        // 未ログインなら、QRの情報で自動的にログインする
+                        showMessage(
+                            "QRコードの情報で再ログインしています...",
+                            "info"
+                        );
+
+                        loginForm.requestSubmit();
                     }
 
                 } catch (error) {
