@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -72,11 +73,6 @@ $endpoints = [
         'method' => 'POST',
     ],
     [
-        'name' => 'password_issuance',
-        'path' => '/backend/password_issuance.php',
-        'method' => 'POST',
-    ],
-    [
         'name' => 'staff',
         'path' => '/backend/staff.php',
         'method' => 'POST',
@@ -141,10 +137,8 @@ $isLocal = in_array($host, [
 ], true);
 
 if (!$isLocal && !$allowRemote) {
-    exit(
-        "ERROR: 初期設定ではlocalhost以外への送信は禁止されています。\n" .
-        "自分が管理するテスト環境に限り --allow-remote を指定してください。\n"
-    );
+    exit("ERROR: 初期設定ではlocalhost以外への送信は禁止されています。\n" .
+        "自分が管理するテスト環境に限り --allow-remote を指定してください。\n");
 }
 
 if (!extension_loaded('curl')) {
@@ -445,7 +439,6 @@ foreach ($endpoints as $endpoint) {
             echo "[WARNING] {$test['name']}";
             echo " HTTP: {$result['status']}";
             echo " {$errorText}\n";
-
         } else {
             $success++;
 
@@ -485,4 +478,3 @@ echo "スキップ: {$skipped}\n";
 echo "====================================\n";
 echo "CSV出力: {$resultFile}\n";
 echo "====================================\n";
-
