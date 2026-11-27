@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -22,14 +21,17 @@
     <meta property="og:description" content="CFMSのユーザー数や店舗別利用状況を確認する集計分析ページです。">
 
     <title>集計分析ページ | CFMS</title>
-    <meta name="description" content="CFMSのユーザー数、3日間の利用者数、店舗別利用者数を集計・分析します。">
+    <meta name="description" content="CFMSのユーザー数、利用履歴、店舗別利用状況を集計・分析します。">
 
     <!-- CommentAnchor: Bootstrapの読み込み -->
     <link rel="stylesheet" href="/lib/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <script src="/lib/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- CommentAnchor: Excel出力ライブラリ -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
+    <!-- CommentAnchor: グラフ出力ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <input type="hidden" class="csrf_token" value="">
 </head>
@@ -60,15 +62,8 @@
                     aria-live="polite">
                 </div>
 
-                <!-- 再読み込み・ダウンロード -->
+                <!-- 再読み込み・Excelダウンロード -->
                 <div class="d-flex justify-content-end gap-2 mb-4 flex-wrap">
-
-                    <button
-                        type="button"
-                        id="downloadCsvButton"
-                        class="btn btn-success">
-                        CSVダウンロード
-                    </button>
 
                     <button
                         type="button"
@@ -147,7 +142,7 @@
 
                 </section>
 
-                <!-- 利用ランキング -->
+                <!-- 利用者ランキング -->
                 <section class="mb-5">
 
                     <h2 class="h5 mb-3">
@@ -232,49 +227,28 @@
         // =====================================
 
         const resultDiv =
-            document.getElementById(
-                'result'
-            );
+            document.getElementById('result');
 
         const reloadButton =
-            document.getElementById(
-                'reloadButton'
-            );
-
-        const downloadCsvButton =
-            document.getElementById(
-                'downloadCsvButton'
-            );
+            document.getElementById('reloadButton');
 
         const downloadExcelButton =
-            document.getElementById(
-                'downloadExcelButton'
-            );
+            document.getElementById('downloadExcelButton');
 
         const totalUsersElement =
-            document.getElementById(
-                'totalUsers'
-            );
+            document.getElementById('totalUsers');
 
         const activeUsersElement =
-            document.getElementById(
-                'activeUsers'
-            );
+            document.getElementById('activeUsers');
 
         const finishedUsersElement =
-            document.getElementById(
-                'finishedUsers'
-            );
+            document.getElementById('finishedUsers');
 
         const recentUserRankingBody =
-            document.getElementById(
-                'recentUserRanking'
-            );
+            document.getElementById('recentUserRanking');
 
         const storeUserRankingBody =
-            document.getElementById(
-                'storeUserRanking'
-            );
+            document.getElementById('storeUserRanking');
 
         // =====================================
         // API
@@ -307,9 +281,7 @@
             resultDiv.replaceChildren();
 
             const alert =
-                document.createElement(
-                    'div'
-                );
+                document.createElement('div');
 
             alert.className =
                 `alert alert-${type}`;
@@ -317,9 +289,7 @@
             alert.textContent =
                 message;
 
-            resultDiv.appendChild(
-                alert
-            );
+            resultDiv.appendChild(alert);
         }
 
         function clearResult() {
@@ -334,9 +304,7 @@
         function getCsrfToken() {
 
             const csrfInput =
-                document.querySelector(
-                    '.csrf_token'
-                );
+                document.querySelector('.csrf_token');
 
             return csrfInput ?
                 csrfInput.value :
@@ -351,8 +319,7 @@
                 Date.now();
 
             while (
-                Date.now() - start <
-                timeoutMs
+                Date.now() - start < timeoutMs
             ) {
 
                 const token =
@@ -363,11 +330,7 @@
                 }
 
                 await new Promise(
-                    resolve =>
-                    setTimeout(
-                        resolve,
-                        100
-                    )
+                    resolve => setTimeout(resolve, 100)
                 );
             }
 
@@ -422,9 +385,7 @@
                 );
             }
 
-            if (
-                data.success !== true
-            ) {
+            if (data.success !== true) {
 
                 throw new Error(
                     data.message ||
@@ -447,15 +408,12 @@
 
             loading = true;
 
-            reloadButton.disabled =
-                true;
+            reloadButton.disabled = true;
 
             try {
 
                 const data =
-                    await callApi(
-                        STATISTICS_API
-                    );
+                    await callApi(STATISTICS_API);
 
                 // ダウンロード用に集計データを保存
                 statisticsData = data;
@@ -463,23 +421,17 @@
                 totalUsersElement.textContent =
                     Number(
                         data.totalUsers ?? 0
-                    ).toLocaleString(
-                        'ja-JP'
-                    );
+                    ).toLocaleString('ja-JP');
 
                 activeUsersElement.textContent =
                     Number(
                         data.activeUsers ?? 0
-                    ).toLocaleString(
-                        'ja-JP'
-                    );
+                    ).toLocaleString('ja-JP');
 
                 finishedUsersElement.textContent =
                     Number(
                         data.finishedUsers ?? 0
-                    ).toLocaleString(
-                        'ja-JP'
-                    );
+                    ).toLocaleString('ja-JP');
 
                 renderRecentUserRanking(
                     data.recentUserRanking || []
@@ -503,8 +455,7 @@
 
                 loading = false;
 
-                reloadButton.disabled =
-                    false;
+                reloadButton.disabled = false;
             }
         }
 
@@ -524,14 +475,10 @@
             ) {
 
                 const row =
-                    document.createElement(
-                        'tr'
-                    );
+                    document.createElement('tr');
 
                 const cell =
-                    document.createElement(
-                        'td'
-                    );
+                    document.createElement('td');
 
                 cell.colSpan = 3;
 
@@ -543,51 +490,36 @@
 
                 row.appendChild(cell);
 
-                recentUserRankingBody.appendChild(
-                    row
-                );
+                recentUserRankingBody.appendChild(row);
 
                 return;
             }
 
             ranking.forEach(
-                (
-                    user,
-                    index
-                ) => {
+                (user, index) => {
 
                     const row =
-                        document.createElement(
-                            'tr'
-                        );
+                        document.createElement('tr');
 
                     const rankCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     rankCell.textContent =
                         index + 1;
 
                     const userCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     userCell.textContent =
                         user.userId ?? '-';
 
                     const countCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     countCell.textContent =
                         Number(
                             user.useCount ?? 0
-                        ).toLocaleString(
-                            'ja-JP'
-                        );
+                        ).toLocaleString('ja-JP');
 
                     row.append(
                         rankCell,
@@ -595,9 +527,7 @@
                         countCell
                     );
 
-                    recentUserRankingBody.appendChild(
-                        row
-                    );
+                    recentUserRankingBody.appendChild(row);
                 }
             );
         }
@@ -618,14 +548,10 @@
             ) {
 
                 const row =
-                    document.createElement(
-                        'tr'
-                    );
+                    document.createElement('tr');
 
                 const cell =
-                    document.createElement(
-                        'td'
-                    );
+                    document.createElement('td');
 
                 cell.colSpan = 4;
 
@@ -637,59 +563,42 @@
 
                 row.appendChild(cell);
 
-                storeUserRankingBody.appendChild(
-                    row
-                );
+                storeUserRankingBody.appendChild(row);
 
                 return;
             }
 
             ranking.forEach(
-                (
-                    store,
-                    index
-                ) => {
+                (store, index) => {
 
                     const row =
-                        document.createElement(
-                            'tr'
-                        );
+                        document.createElement('tr');
 
                     const rankCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     rankCell.textContent =
                         index + 1;
 
                     const storeIdCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     storeIdCell.textContent =
                         store.storeId ?? '-';
 
                     const storeNameCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     storeNameCell.textContent =
                         store.storeName ?? '-';
 
                     const userCountCell =
-                        document.createElement(
-                            'td'
-                        );
+                        document.createElement('td');
 
                     userCountCell.textContent =
                         Number(
                             store.userCount ?? 0
-                        ).toLocaleString(
-                            'ja-JP'
-                        );
+                        ).toLocaleString('ja-JP');
 
                     row.append(
                         rankCell,
@@ -698,84 +607,13 @@
                         userCountCell
                     );
 
-                    storeUserRankingBody.appendChild(
-                        row
-                    );
+                    storeUserRankingBody.appendChild(row);
                 }
             );
         }
 
         // =====================================
-        // ダウンロード共通処理
-        // =====================================
-
-        function getDownloadData() {
-
-            if (!statisticsData) {
-
-                showResult(
-                    'ダウンロードするデータがありません。',
-                    'warning'
-                );
-
-                return null;
-            }
-
-            return [
-                {
-                    sheetName: 'ユーザー集計',
-                    data: [
-                        ['項目', '人数'],
-                        [
-                            '総ユーザー数',
-                            Number(statisticsData.totalUsers ?? 0)
-                        ],
-                        [
-                            'アクティブユーザー',
-                            Number(statisticsData.activeUsers ?? 0)
-                        ],
-                        [
-                            '終了済みユーザー',
-                            Number(statisticsData.finishedUsers ?? 0)
-                        ]
-                    ]
-                },
-                {
-                    sheetName: '利用者ランキング',
-                    data: [
-                        ['順位', 'ユーザートークン', '得点'],
-                        ...(Array.isArray(statisticsData.recentUserRanking)
-                            ? statisticsData.recentUserRanking.map(
-                                (user, index) => [
-                                    index + 1,
-                                    user.userId ?? '-',
-                                    Number(user.useCount ?? 0)
-                                ]
-                            )
-                            : [])
-                    ]
-                },
-                {
-                    sheetName: '店舗別ランキング',
-                    data: [
-                        ['順位', '店舗ID', '店舗名', '利用者数'],
-                        ...(Array.isArray(statisticsData.storeUserRanking)
-                            ? statisticsData.storeUserRanking.map(
-                                (store, index) => [
-                                    index + 1,
-                                    store.storeId ?? '-',
-                                    store.storeName ?? '-',
-                                    Number(store.userCount ?? 0)
-                                ]
-                            )
-                            : [])
-                    ]
-                }
-            ];
-        }
-
-        // =====================================
-        // ファイル名用の日付
+        // 日付を取得
         // =====================================
 
         function getDateString() {
@@ -800,98 +638,566 @@
         }
 
         // =====================================
-        // CSVダウンロード
+        // 日時を表示用に変換
         // =====================================
 
-        function downloadCsv() {
+        function formatDateTime(value) {
 
-            const sheets =
-                getDownloadData();
+            if (!value) {
+                return '-';
+            }
 
-            if (!sheets) {
+            const date =
+                new Date(
+                    String(value).replace(' ', 'T')
+                );
+
+            if (Number.isNaN(date.getTime())) {
+                return String(value);
+            }
+
+            const year =
+                date.getFullYear();
+
+            const month =
+                String(date.getMonth() + 1).padStart(2, '0');
+
+            const day =
+                String(date.getDate()).padStart(2, '0');
+
+            const hours =
+                String(date.getHours()).padStart(2, '0');
+
+            const minutes =
+                String(date.getMinutes()).padStart(2, '0');
+
+            const seconds =
+                String(date.getSeconds()).padStart(2, '0');
+
+            return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // =====================================
+        // 滞在時間を時:分:秒に変換
+        // 例：30分 → 0:30:00
+        // =====================================
+
+        function formatStayTime(seconds) {
+
+            if (
+                seconds === null ||
+                seconds === undefined ||
+                seconds === ''
+            ) {
+                return '利用中';
+            }
+
+            const totalSeconds =
+                Math.max(
+                    0,
+                    Math.floor(Number(seconds) || 0)
+                );
+
+            const hours =
+                Math.floor(totalSeconds / 3600);
+
+            const minutes =
+                Math.floor(
+                    (totalSeconds % 3600) / 60
+                );
+
+            const remainingSeconds =
+                totalSeconds % 60;
+
+            return [
+                String(hours),
+                String(minutes).padStart(2, '0'),
+                String(remainingSeconds).padStart(2, '0')
+            ].join(':');
+        }
+
+        // =====================================
+        // 利用履歴の日付を取得
+        // =====================================
+
+        function getUsageDate(history) {
+
+            const dateValue =
+                history.scoreCreatedAt ??
+                history.createdAt ??
+                history.created_at ??
+                null;
+
+            if (!dateValue) {
+                return null;
+            }
+
+            const date =
+                new Date(
+                    String(dateValue).replace(' ', 'T')
+                );
+
+            if (Number.isNaN(date.getTime())) {
+                return null;
+            }
+
+            const year =
+                date.getFullYear();
+
+            const month =
+                String(date.getMonth() + 1).padStart(2, '0');
+
+            const day =
+                String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        }
+
+        // =====================================
+        // 利用履歴を日付ごとに分類
+        // =====================================
+
+        function classifyUsageHistory(history) {
+
+            if (!Array.isArray(history)) {
+                return {
+                    firstDay: [],
+                    secondDay: [],
+                    dates: []
+                };
+            }
+
+            const dates =
+                [...new Set(
+                    history
+                        .map(item => getUsageDate(item))
+                        .filter(Boolean)
+                )].sort();
+
+            const firstDate =
+                dates[0] ?? null;
+
+            const secondDate =
+                dates[1] ?? null;
+
+            const firstDay =
+                history.filter(
+                    item => getUsageDate(item) === firstDate
+                );
+
+            const secondDay =
+                history.filter(
+                    item => getUsageDate(item) === secondDate
+                );
+
+            return {
+                firstDay,
+                secondDay,
+                dates
+            };
+        }
+
+        // =====================================
+        // 利用履歴のExcel用データ
+        // =====================================
+
+        function createUsageHistoryRows(history) {
+
+            const rows = [
+                [
+                    '利用日時',
+                    'ユーザーID',
+                    'ユーザートークン',
+                    '店舗ID',
+                    '店舗名',
+                    '得点',
+                    'スタッフ名'
+                ]
+            ];
+
+            if (!Array.isArray(history)) {
+                return rows;
+            }
+
+            history.forEach(item => {
+
+                rows.push([
+                    formatDateTime(
+                        item.scoreCreatedAt ??
+                        item.createdAt ??
+                        item.created_at
+                    ),
+                    item.userId ?? '-',
+                    item.userToken ?? item.userId ?? '-',
+                    item.storeId ?? '-',
+                    item.storeName ?? '-',
+                    Number(item.score ?? 0),
+                    item.staffName ?? '-'
+                ]);
+            });
+
+            return rows;
+        }
+
+        // =====================================
+        // 滞在時間のExcel用データ
+        // =====================================
+
+        function createStayTimeRows(stayTimes) {
+
+            const rows = [
+                [
+                    'ユーザーID',
+                    'ユーザートークン',
+                    '利用開始日時',
+                    '利用終了日時',
+                    '滞在時間'
+                ]
+            ];
+
+            if (!Array.isArray(stayTimes)) {
+                return rows;
+            }
+
+            stayTimes.forEach(item => {
+
+                rows.push([
+                    item.userId ?? '-',
+                    item.userToken ?? '-',
+                    formatDateTime(
+                        item.createdAt ??
+                        item.userCreatedAt
+                    ),
+                    item.finishedAt ?
+                        formatDateTime(item.finishedAt) :
+                        '利用中',
+                    formatStayTime(item.staySeconds)
+                ]);
+            });
+
+            return rows;
+        }
+
+        // =====================================
+        // 店舗別ランキングのExcel用データ
+        // =====================================
+
+        function createStoreRankingRows(ranking) {
+
+            const rows = [
+                [
+                    '順位',
+                    '店舗ID',
+                    '店舗名',
+                    '利用者数'
+                ]
+            ];
+
+            if (!Array.isArray(ranking)) {
+                return rows;
+            }
+
+            ranking.forEach((store, index) => {
+
+                rows.push([
+                    index + 1,
+                    store.storeId ?? '-',
+                    store.storeName ?? '-',
+                    Number(store.userCount ?? 0)
+                ]);
+            });
+
+            return rows;
+        }
+
+        // =====================================
+        // 利用者ランキングのExcel用データ
+        // =====================================
+
+        function createUserRankingRows(ranking) {
+
+            const rows = [
+                [
+                    '順位',
+                    'ユーザートークン',
+                    '得点'
+                ]
+            ];
+
+            if (!Array.isArray(ranking)) {
+                return rows;
+            }
+
+            ranking.forEach((user, index) => {
+
+                rows.push([
+                    index + 1,
+                    user.userId ?? '-',
+                    Number(user.useCount ?? 0)
+                ]);
+            });
+
+            return rows;
+        }
+
+        // =====================================
+        // ユーザー集計のExcel用データ
+        // =====================================
+
+        function createUserSummaryRows(data) {
+
+            return [
+                ['項目', '人数'],
+                [
+                    '総ユーザー数',
+                    Number(data.totalUsers ?? 0)
+                ],
+                [
+                    'アクティブユーザー',
+                    Number(data.activeUsers ?? 0)
+                ],
+                [
+                    '終了済みユーザー',
+                    Number(data.finishedUsers ?? 0)
+                ]
+            ];
+        }
+
+        // =====================================
+        // Excelワークシートの列幅調整
+        // =====================================
+
+        function setWorksheetColumnWidths(
+            worksheet,
+            rows
+        ) {
+
+            if (!Array.isArray(rows) || rows.length === 0) {
                 return;
             }
 
-            const csvRows = [];
-
-            sheets.forEach(sheet => {
-
-                csvRows.push(
-                    `"${sheet.sheetName}"`
+            const columnCount =
+                Math.max(
+                    ...rows.map(row => row.length)
                 );
 
-                sheet.data.forEach(row => {
+            for (
+                let columnIndex = 0;
+                columnIndex < columnCount;
+                columnIndex++
+            ) {
 
-                    const csvRow =
-                        row.map(value => {
+                const maxLength =
+                    Math.max(
+                        ...rows.map(
+                            row => String(
+                                row[columnIndex] ?? ''
+                            ).length
+                        ),
+                        10
+                    );
 
-                            const text =
-                                String(value ?? '');
+                worksheet.getColumn(
+                    columnIndex + 1
+                ).width =
+                    Math.min(
+                        Math.max(maxLength + 4, 12),
+                        40
+                    );
+            }
+        }
 
-                            return '"' +
-                                text.replace(/"/g, '""') +
-                                '"';
+        // =====================================
+        // Excelワークシート作成
+        // =====================================
 
-                        }).join(',');
+        function addWorksheet(
+            workbook,
+            sheetName,
+            rows
+        ) {
 
-                    csvRows.push(csvRow);
-                });
+            const worksheet =
+                workbook.addWorksheet(sheetName);
 
-                csvRows.push('');
+            worksheet.addRows(rows);
+
+            // ヘッダー行の書式
+            const headerRow =
+                worksheet.getRow(1);
+
+            headerRow.font = {
+                bold: true
+            };
+
+            headerRow.alignment = {
+                vertical: 'middle',
+                horizontal: 'center'
+            };
+
+            headerRow.eachCell(cell => {
+
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: {
+                        argb: 'FFD9EAF7'
+                    }
+                };
             });
 
-            // Excelで日本語が文字化けしないようにBOMを追加
-            const csvContent =
-                '\uFEFF' + csvRows.join('\r\n');
+            // 列幅調整
+            setWorksheetColumnWidths(
+                worksheet,
+                rows
+            );
 
-            const blob =
-                new Blob(
-                    [csvContent],
+            // フィルター
+            if (rows.length > 1) {
+
+                worksheet.autoFilter = {
+                    from: {
+                        row: 1,
+                        column: 1
+                    },
+                    to: {
+                        row: rows.length,
+                        column: rows[0].length
+                    }
+                };
+            }
+
+            return worksheet;
+        }
+
+        // =====================================
+        // 人気グラフを画像として作成
+        // =====================================
+
+        async function createPopularityChartImage(
+            ranking
+        ) {
+
+            if (
+                typeof Chart === 'undefined'
+            ) {
+                throw new Error(
+                    'グラフ出力ライブラリを読み込めませんでした。'
+                );
+            }
+
+            const chartData =
+                Array.isArray(ranking) ?
+                    ranking :
+                    [];
+
+            const canvas =
+                document.createElement('canvas');
+
+            canvas.width = 1200;
+            canvas.height = 650;
+
+            const labels =
+                chartData.map(
+                    item => item.storeName ?? '店舗名なし'
+                );
+
+            const values =
+                chartData.map(
+                    item => Number(item.userCount ?? 0)
+                );
+
+            const chart =
+                new Chart(
+                    canvas.getContext('2d'),
                     {
-                        type: 'text/csv;charset=utf-8;'
+                        type: 'bar',
+
+                        data: {
+                            labels,
+
+                            datasets: [
+                                {
+                                    label: '利用者数',
+
+                                    data: values,
+
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+
+                        options: {
+                            responsive: false,
+
+                            animation: false,
+
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '店舗別利用者数'
+                                },
+
+                                legend: {
+                                    display: true
+                                }
+                            },
+
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+
+                                    ticks: {
+                                        precision: 0
+                                    },
+
+                                    title: {
+                                        display: true,
+                                        text: '利用者数'
+                                    }
+                                },
+
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '店舗名'
+                                    }
+                                }
+                            }
+                        }
                     }
                 );
 
-            const url =
-                URL.createObjectURL(blob);
+            // グラフを描画
+            chart.update();
 
-            const link =
-                document.createElement('a');
+            // Excelに挿入する画像データ
+            const imageData =
+                canvas.toDataURL('image/png');
 
-            link.href = url;
+            chart.destroy();
 
-            link.download =
-                `CFMS集計データ_${getDateString()}.csv`;
-
-            document.body.appendChild(link);
-
-            link.click();
-
-            link.remove();
-
-            URL.revokeObjectURL(url);
-
-            showResult(
-                'CSVファイルをダウンロードしました。',
-                'success'
-            );
+            return imageData;
         }
 
         // =====================================
         // Excelダウンロード
         // =====================================
 
-        function downloadExcel() {
+        async function downloadExcel() {
 
-            const sheets =
-                getDownloadData();
+            if (!statisticsData) {
 
-            if (!sheets) {
+                showResult(
+                    'ダウンロードするデータがありません。',
+                    'warning'
+                );
+
                 return;
             }
 
             if (
-                typeof XLSX === 'undefined'
+                typeof ExcelJS === 'undefined'
             ) {
 
                 showResult(
@@ -902,69 +1208,230 @@
                 return;
             }
 
-            // Excelブック作成
-            const workbook =
-                XLSX.utils.book_new();
+            downloadExcelButton.disabled = true;
 
-            sheets.forEach(sheet => {
+            try {
 
-                const worksheet =
-                    XLSX.utils.aoa_to_sheet(
-                        sheet.data
+                const data =
+                    statisticsData;
+
+                const workbook =
+                    new ExcelJS.Workbook();
+
+                workbook.creator = 'CFMS';
+
+                workbook.created = new Date();
+
+                // ---------------------------------
+                // 利用履歴データ
+                // ---------------------------------
+
+                const usageHistory =
+                    Array.isArray(data.usageHistory) ?
+                        data.usageHistory :
+                        [];
+
+                // ---------------------------------
+                // 1日目・2日目を自動判定
+                // ---------------------------------
+
+                const classified =
+                    classifyUsageHistory(usageHistory);
+
+                // ---------------------------------
+                // 1. ユーザー集計
+                // ---------------------------------
+
+                addWorksheet(
+                    workbook,
+                    'ユーザー集計',
+                    createUserSummaryRows(data)
+                );
+
+                // ---------------------------------
+                // 2. 利用者ランキング
+                // ---------------------------------
+
+                addWorksheet(
+                    workbook,
+                    '利用者ランキング',
+                    createUserRankingRows(
+                        data.recentUserRanking
+                    )
+                );
+
+                // ---------------------------------
+                // 3. 店舗別ランキング
+                // ---------------------------------
+
+                addWorksheet(
+                    workbook,
+                    '店舗別ランキング',
+                    createStoreRankingRows(
+                        data.storeUserRanking
+                    )
+                );
+
+                // ---------------------------------
+                // 4. 利用履歴
+                // ---------------------------------
+
+                addWorksheet(
+                    workbook,
+                    '利用履歴',
+                    createUsageHistoryRows(
+                        usageHistory
+                    )
+                );
+
+                // ---------------------------------
+                // 5. 1日目
+                // ---------------------------------
+
+                const firstDayRows =
+                    createUsageHistoryRows(
+                        classified.firstDay
                     );
 
-                // 列幅設定
-                worksheet['!cols'] =
-                    sheet.data[0].map(
-                        (header, index) => {
+                const firstDaySheet =
+                    addWorksheet(
+                        workbook,
+                        '1日目',
+                        firstDayRows
+                    );
 
-                            const maxLength =
-                                Math.max(
-                                    String(header).length,
-                                    ...sheet.data.slice(1).map(
-                                        row =>
-                                            String(
-                                                row[index] ?? ''
-                                            ).length
-                                    )
-                                );
+                if (classified.dates[0]) {
 
-                            return {
-                                wch: Math.min(
-                                    Math.max(maxLength + 4, 12),
-                                    40
-                                )
-                            };
+                    firstDaySheet.getCell('A1').note =
+                        `対象日：${classified.dates[0]}`;
+                }
+
+                // ---------------------------------
+                // 6. 2日目
+                // ---------------------------------
+
+                const secondDayRows =
+                    createUsageHistoryRows(
+                        classified.secondDay
+                    );
+
+                const secondDaySheet =
+                    addWorksheet(
+                        workbook,
+                        '2日目',
+                        secondDayRows
+                    );
+
+                if (classified.dates[1]) {
+
+                    secondDaySheet.getCell('A1').note =
+                        `対象日：${classified.dates[1]}`;
+                }
+
+                // ---------------------------------
+                // 7. 人気
+                // ---------------------------------
+
+                const popularitySheet =
+                    addWorksheet(
+                        workbook,
+                        '人気',
+                        createStoreRankingRows(
+                            data.storeUserRanking
+                        )
+                    );
+
+                // グラフ画像を作成
+                const chartImage =
+                    await createPopularityChartImage(
+                        data.storeUserRanking
+                    );
+
+                // Excelに画像を追加
+                const imageId =
+                    workbook.addImage({
+                        base64: chartImage,
+                        extension: 'png'
+                    });
+
+                popularitySheet.addImage(
+                    imageId,
+                    'F2:N22'
+                );
+
+                // ---------------------------------
+                // 8. 滞在時間
+                // ---------------------------------
+
+                addWorksheet(
+                    workbook,
+                    '滞在時間',
+                    createStayTimeRows(
+                        data.stayTimes
+                    )
+                );
+
+                // ---------------------------------
+                // Excelファイル出力
+                // ---------------------------------
+
+                const buffer =
+                    await workbook.xlsx.writeBuffer();
+
+                const blob =
+                    new Blob(
+                        [buffer],
+                        {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                         }
                     );
 
-                XLSX.utils.book_append_sheet(
-                    workbook,
-                    worksheet,
-                    sheet.sheetName
+                const url =
+                    URL.createObjectURL(blob);
+
+                const link =
+                    document.createElement('a');
+
+                link.href = url;
+
+                link.download =
+                    `CFMS集計データ_${getDateString()}.xlsx`;
+
+                document.body.appendChild(link);
+
+                link.click();
+
+                link.remove();
+
+                URL.revokeObjectURL(url);
+
+                showResult(
+                    'Excelファイルをダウンロードしました。',
+                    'success'
                 );
-            });
 
-            // Excelファイル出力
-            XLSX.writeFile(
-                workbook,
-                `CFMS集計データ_${getDateString()}.xlsx`
-            );
+            } catch (error) {
 
-            showResult(
-                'Excelファイルをダウンロードしました。',
-                'success'
-            );
+                console.error(
+                    'Excelダウンロードエラー:',
+                    error
+                );
+
+                showResult(
+                    error.message ||
+                    'Excelファイルの作成に失敗しました。',
+                    'danger'
+                );
+
+            } finally {
+
+                downloadExcelButton.disabled = false;
+            }
         }
 
         // =====================================
-        // ダウンロードボタン
+        // Excelダウンロードボタン
         // =====================================
-
-        downloadCsvButton.addEventListener(
-            'click',
-            downloadCsv
-        );
 
         downloadExcelButton.addEventListener(
             'click',
