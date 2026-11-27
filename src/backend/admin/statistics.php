@@ -19,6 +19,7 @@
  *     finishedUsers: 終了済みユーザー数,
  *     recentUserRanking: 利用者ランキング,
  *     storeUserRanking: 店舗別利用者数ランキング,
+ *     usageHistory: 利用履歴,
  *     day1: 1日目の利用履歴,
  *     day2: 2日目の利用履歴,
  *     popular: 店舗別利用状況,
@@ -281,21 +282,150 @@ try {
         ];
     }
 
+    //ANCHOR - 1日目・2日目の自動判定
+    $usageDates = [];
+
+    foreach ($usageHistory as $history) {
+
+        // 利用日時が文字列でない場合はスキップ
+        if (
+            !isset($history['scoreCreatedAt']) ||
+            !is_string($history['scoreCreatedAt']) ||
+            $history['scoreCreatedAt'] === ''
+        ) {
+            continue;
+        }
+
+        // YYYY-MM-DD形式の日付を取得
+        $usageDate = substr($history['scoreCreatedAt'], 0, 10);
+
+        // 日付形式を確認
+        $dateObject = DateTime::createFromFormat(
+            '!Y-m-d',
+            $usageDate
+        );
+
+        if (
+            $dateObject === false ||
+            $dateObject->format('Y-m-d') !== $usageDate
+        ) {
+            continue;
+        }
+
+        $usageDates[$usageDate] = true;
+    }
+
+    // 利用日を古い順に並べる
+    $usageDates = array_keys($usageDates);
+    sort($usageDates, SORT_STRING);
+
+    // 1日目・2日目の利用履歴
+    $day1 = [];
+    $day2 = [];
+
+    $day1Date = $usageDates[0] ?? null;
+    $day2Date = $usageDates[1] ?? null;
+
+    foreach ($usageHistory as $history) {
+
+        $scoreCreatedAt = $history['scoreCreatedAt'] ?? null;
+
+        if (
+            !is_string($scoreCreatedAt) ||
+            $scoreCreatedAt === ''
+        ) {
+            continue;
+        }
+
+        $usageDate = substr($scoreCreatedAt, 0, 10);
+
+        if (
+            $day1Date !== null &&
+            $usageDate === $day1Date
+        ) {
+            $day1[] = $history;
+        } elseif (
+            $day2Date !== null &&
+            $usageDate === $day2Date
+        ) {
+            $day2[] = $history;
+        }
+    }
+
+    //ANCHOR - 店舗別利用状況
+    $popularData = [];
+
+    foreach ($usageHistory as $history) {
+
+        // 必須データの確認
+        if (
+            !isset($history['storeId']) ||
+            !isset($history['storeName']) ||
+            !isset($history['userId'])
+        ) {
+            continue;
+        }
+
+        $storeId = (int)$history['storeId'];
+        $userId = (int)$history['userId'];
+
+        // 店舗データを初期化
+        if (!isset($popularData[$storeId])) {
+            $popularData[$storeId] = [
+                "storeId" => $storeId,
+                "storeName" => (string)$history['storeName'],
+                "useCount" => 0,
+                "userIds" => []
+            ];
+        }
+
+        // 利用回数を加算
+        $popularData[$storeId]['useCount']++;
+
+        // 重複しないユーザーを記録
+        $popularData[$storeId]['userIds'][$userId] = true;
+    }
+
+    // 店舗別利用状況を作成
+    $popular = [];
+
+    foreach ($popularData as $store) {
+        $popular[] = [
+            "storeId" => (int)$store['storeId'],
+            "storeName" => $store['storeName'],
+            "useCount" => (int)$store['useCount'],
+            "userCount" => count($store['userIds'])
+        ];
+    }
+
+    // 利用回数が多い店舗順に並べる
+    usort($popular, function ($a, $b) {
+
+        if ($a['useCount'] === $b['useCount']) {
+            return $a['storeId'] <=> $b['storeId'];
+        }
+
+        return $b['useCount'] <=> $a['useCount'];
+    });
+
     //ANCHOR - JSON返却
     echo json_encode([
         "success" => true,
         "message" => "集計データを取得しました。",
-        "data" => [],
+        "data" => $usageHistory,
         "totalUsers" => (int)$userCounts['total_users'],
         "activeUsers" => (int)$userCounts['active_users'],
         "finishedUsers" => (int)$userCounts['finished_users'],
         "recentUserRanking" => $recentUserRanking,
         "storeUserRanking" => $storeUserRanking,
         "usageHistory" => $usageHistory,
+        "day1" => $day1,
+        "day2" => $day2,
+        "popular" => $popular,
         "stayTimes" => $stayTimes
     ], JSON_UNESCAPED_UNICODE);
 
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
 
     error_log("Statistics error: " . $e->getMessage());
 
